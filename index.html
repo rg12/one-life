@@ -307,7 +307,7 @@ const TRAITS = {
     health: 12,
     looks: 6,
     smarts: -5,
-    desc: "Built for the field. Opens the door to a pro-athlete life."
+    desc: "Built for the field. Opens the door to a pro-athlete life. Training gains come faster."
   },
   studious: {
     key: "studious",
@@ -315,7 +315,7 @@ const TRAITS = {
     icon: Brain,
     smarts: 16,
     happiness: -4,
-    desc: "Sharp and disciplined. Opens the door to college and the C-suite."
+    desc: "Sharp and disciplined. Opens the door to college and the C-suite. Career ladders climb quicker."
   },
   notorious: {
     key: "notorious",
@@ -324,9 +324,46 @@ const TRAITS = {
     reputation: 16,
     happiness: 6,
     smarts: -6,
-    desc: "Magnetic and unpredictable. Opens the door to fame and the stage."
+    desc: "Magnetic and unpredictable. Fame and the underworld both reward you. Bad press still boosts you."
+  },
+  creative: {
+    key: "creative",
+    label: "Creative",
+    icon: Mic2,
+    smarts: 5,
+    happiness: 8,
+    reputation: 3,
+    desc: "Born with an eye and an ear. Hit chances +20% for all art. Paintings start at higher values. Musicians' streams multiply."
+  },
+  charismatic: {
+    key: "charismatic",
+    label: "Charismatic",
+    icon: Landmark,
+    reputation: 10,
+    looks: 5,
+    happiness: 5,
+    smarts: -3,
+    desc: "People listen when you speak. Politics, entertainment, public life. Popularity gains are amplified 30%."
+  },
+  cunning: {
+    key: "cunning",
+    label: "Cunning",
+    icon: Gavel,
+    smarts: 8,
+    reputation: -5,
+    happiness: 3,
+    desc: "You see angles others miss. Business deals close faster. Underworld income multiplied. People don't fully trust you."
   }
 };
+
+// ── Title generators for musician/painter works ──────────────────
+const _ADJ = ["Crimson", "Golden", "Silent", "Eternal", "Broken", "Rising", "Forgotten", "Midnight", "Sacred", "Pale", "Raw", "Endless", "Hollow", "Wild"];
+const _NOUN = ["Dream", "Shore", "Figure", "Garden", "Mirror", "City", "Storm", "Memory", "Light", "Hour", "Silence", "Return", "Voice", "Weight"];
+const _SONG1 = ["Love", "Lost", "Free", "Dark", "Young", "True", "Real", "Bright", "Deep", "High", "Far", "Still", "Last", "New"];
+const _SONG2 = ["Again", "Away", "Tonight", "Forever", "Inside", "Higher", "Deeper", "Louder", "Closer", "Always", "Never", "Once", "Home", "Burning"];
+const genPaintingTitle = () => `${pick(_ADJ)} ${pick(_NOUN)}`;
+const genSongTitle = () => `${pick(_SONG1)} ${pick(_SONG2)}`;
+const genAlbumTitle = () => `${pick(_ADJ)} ${pick(_SONG2)}`;
 const POLITICAL_TIERS = [{
   key: "council",
   label: "Local Council",
@@ -3044,6 +3081,475 @@ const HEALTH_ACTIONS = [{
   looks: 10,
   happiness: 6
 }];
+
+/* ---------------------------------------------------------------- */
+/* REPUTATION & POPULARITY DATA                                      */
+/* ---------------------------------------------------------------- */
+
+// One-time PR boosts (like health actions — immediate effect)
+const PR_ACTIONS = [{
+  key: "press_blitz",
+  label: "Press Release Blitz",
+  icon: TrendingUp,
+  desc: "Flood the news cycle with your story.",
+  cost: 4000,
+  rep: 5,
+  pop: 2
+}, {
+  key: "media_tour",
+  label: "Podcast & Media Tour",
+  icon: Mic2,
+  desc: "Three talk shows, two podcasts. You're everywhere.",
+  cost: 5000,
+  rep: 3,
+  pop: 6
+}, {
+  key: "magazine",
+  label: "Magazine Cover Feature",
+  icon: Sparkles,
+  desc: "Full spread in a top lifestyle magazine.",
+  cost: 15000,
+  rep: 8,
+  pop: 5
+}, {
+  key: "brand_deal",
+  label: "Brand Ambassador Deal",
+  icon: Coins,
+  desc: "Attach your name to a premium brand.",
+  cost: 10000,
+  rep: 5,
+  pop: 7,
+  cashback: 8000
+}, {
+  key: "viral",
+  label: "Viral Social Campaign",
+  icon: Trophy,
+  desc: "Engineer a moment. Works if your rep is already solid.",
+  cost: 8000,
+  rep: 3,
+  pop: 12
+}, {
+  key: "cleanup",
+  label: "Controversy Cleanup",
+  icon: Gavel,
+  desc: "Damage control specialists. Best after a scandal.",
+  cost: 28000,
+  rep: 12,
+  pop: 4,
+  reqLowRep: true
+}, {
+  key: "speech",
+  label: "High-Profile Public Speech",
+  icon: Landmark,
+  desc: "Smarts determine impact. Free but risky.",
+  cost: 0,
+  repMult: true
+}, {
+  key: "documentary",
+  label: "Commission a Documentary",
+  icon: Sparkles,
+  desc: "A flattering portrait of your life and work.",
+  cost: 40000,
+  rep: 15,
+  pop: 10
+}];
+
+// Annual subscriptions — deducted at age-up, give passive rep/pop and bonuses
+const AGENCIES = [{
+  key: "digital_pr",
+  label: "Digital PR Agency",
+  icon: TrendingUp,
+  desc: "Baseline coverage, social monitoring, press relationships.",
+  costPerYear: 6000,
+  repPerYear: 2,
+  popPerYear: 2
+}, {
+  key: "social_media",
+  label: "Social Media Management",
+  icon: Mic2,
+  desc: "Daily posts, engagement farming, trend riding. Pure popularity machine.",
+  costPerYear: 10000,
+  repPerYear: 1,
+  popPerYear: 5
+}, {
+  key: "political_pr",
+  label: "Political Consulting Firm",
+  icon: Gavel,
+  desc: "Specialists in voter sentiment, approval ratings, and political messaging.",
+  costPerYear: 22000,
+  repPerYear: 2,
+  popPerYear: 4,
+  politicsOnly: false,
+  approvalBonus: 2
+}, {
+  key: "celebrity_mgmt",
+  label: "Celebrity Management",
+  icon: Trophy,
+  desc: "Full personal brand management. Peak impact for arts and sports careers.",
+  costPerYear: 38000,
+  repPerYear: 3,
+  popPerYear: 8,
+  pathBonus: ["arts", "sports"],
+  pathBonusExtra: {
+    popPerYear: 4
+  }
+}, {
+  key: "crisis_pr",
+  label: "Crisis PR Retainer",
+  icon: Skull,
+  desc: "On standby 24/7. Scandals hurt 50% less while this is active.",
+  costPerYear: 55000,
+  repPerYear: 1,
+  popPerYear: 1,
+  crisisShield: 0.50
+}, {
+  key: "full_brand",
+  label: "Full Brand Management",
+  icon: Sparkles,
+  desc: "The whole machine — PR, social, crisis, publishing, speaking circuits.",
+  costPerYear: 90000,
+  repPerYear: 5,
+  popPerYear: 8,
+  crisisShield: 0.25,
+  approvalBonus: 1
+}];
+
+/* ---------------------------------------------------------------- */
+/* SPORTS CAREER SYSTEM                                             */
+/* ---------------------------------------------------------------- */
+
+const SPORTS_TRAINING_ACTIONS = [{
+  key: "intensive",
+  label: "Intensive Training",
+  icon: Trophy,
+  cost: 2000,
+  rating: 6,
+  health: -4,
+  desc: "Push limits. Rating gains fast, but the body pays."
+}, {
+  key: "coach",
+  label: "Hire Performance Coach",
+  icon: Brain,
+  cost: 18000,
+  rating: 12,
+  health: 2,
+  desc: "Expert-led regime. The biggest single rating jump."
+}, {
+  key: "fitness",
+  label: "Strength & Conditioning",
+  icon: Heart,
+  cost: 3000,
+  rating: 2,
+  health: 8,
+  desc: "Build the foundation everything else rests on."
+}, {
+  key: "rest",
+  label: "Rest & Recovery",
+  icon: Sparkles,
+  cost: 0,
+  health: 12,
+  happiness: 5,
+  desc: "Your body is not a machine. Give it what it needs."
+}, {
+  key: "psychologist",
+  label: "Sports Psychologist",
+  icon: Brain,
+  cost: 8000,
+  rating: 3,
+  happiness: 7,
+  desc: "The mental game is half the sport."
+}, {
+  key: "study",
+  label: "Study Opponents",
+  icon: Gavel,
+  cost: 1000,
+  rating: 4,
+  smarts: 2,
+  desc: "Break down their technique. Know them before they know you."
+}];
+const SPORTS_SPONSORS = [{
+  key: "sportswear",
+  label: "SportWear Co.",
+  income: 20000,
+  rep: 4,
+  reqRating: 45,
+  icon: Trophy
+}, {
+  key: "energy",
+  label: "Energy+ Drinks",
+  income: 40000,
+  rep: 3,
+  reqRating: 58,
+  icon: Sparkles
+}, {
+  key: "luxury_watch",
+  label: "Prestige Watch",
+  income: 18000,
+  rep: 9,
+  reqRating: 65,
+  icon: Gem
+}, {
+  key: "auto_brand",
+  label: "AutoBrand Cars",
+  income: 65000,
+  rep: 7,
+  reqRating: 72,
+  icon: Building2
+}, {
+  key: "national",
+  label: "National Heritage",
+  income: 120000,
+  rep: 12,
+  reqRating: 82,
+  icon: Landmark
+}, {
+  key: "global_icon",
+  label: "Global Icon Deal",
+  income: 300000,
+  rep: 18,
+  reqRating: 90,
+  icon: Trophy
+}];
+const SPORTS_RIVALS = {
+  cricket: [{
+    name: "Rahul Kapoor",
+    rating: 68
+  }, {
+    name: "Aakash Mehta",
+    rating: 74
+  }],
+  football: [{
+    name: "Diego Santos",
+    rating: 65
+  }, {
+    name: "Yusuf Adebayo",
+    rating: 71
+  }],
+  tennis: [{
+    name: "Yuki Chen",
+    rating: 76
+  }, {
+    name: "Marco Petrov",
+    rating: 69
+  }],
+  athletics: [{
+    name: "Amara Okafor",
+    rating: 80
+  }, {
+    name: "Sven Lindqvist",
+    rating: 72
+  }]
+};
+const SPORTS_TROPHIES = {
+  cricket: ["First Century", "Man of the Match", "Series MVP", "World Cup Winner", "Legend of the Game"],
+  football: ["First Goal", "Player of the Season", "Golden Boot", "Champions Final", "National Icon"],
+  tennis: ["First Title", "Top 50 Entry", "Top 10 Entry", "Grand Slam Finalist", "World #1"],
+  athletics: ["National Qualifier", "National Medal", "Asian Games Gold", "Olympic Finalist", "Olympic Gold"]
+};
+
+/* ---------------------------------------------------------------- */
+/* ARTS CAREER SYSTEM                                               */
+/* ---------------------------------------------------------------- */
+
+const ARTS_ACTIONS = [{
+  key: "release",
+  label: "Release New Work",
+  icon: Mic2,
+  cost: 10000,
+  type: "release",
+  desc: "Put your work into the world. Hit or miss."
+}, {
+  key: "big_release",
+  label: "Major Production Release",
+  icon: Sparkles,
+  cost: 50000,
+  type: "release",
+  isMajor: true,
+  desc: "Full budget production. Higher floor, much higher ceiling."
+}, {
+  key: "tour",
+  label: "Go on Tour / Exhibition",
+  icon: Trophy,
+  cost: 20000,
+  type: "tour",
+  desc: "Perform live. Fame grows fastest on stage."
+}, {
+  key: "collab",
+  label: "Artist Collaboration",
+  icon: Heart,
+  cost: 5000,
+  type: "collab",
+  desc: "Cross-pollinate audiences. New fans, shared fame."
+}, {
+  key: "commercial",
+  label: "Take Commercial Work",
+  icon: Coins,
+  cost: 0,
+  type: "commercial",
+  desc: "Guaranteed income. Your artistic cred takes a hit."
+}, {
+  key: "study_craft",
+  label: "Study & Craft Deep Dive",
+  icon: Brain,
+  cost: 8000,
+  type: "study",
+  desc: "Next release gets a quality bonus. Invest in yourself."
+}, {
+  key: "press",
+  label: "Media & Press Blitz",
+  icon: TrendingUp,
+  cost: 6000,
+  type: "pr",
+  desc: "Push your profile. Pure fame play."
+}];
+const ARTS_LABELS = [{
+  key: "indie",
+  label: "Independent",
+  royaltyRate: 0.85,
+  advance: 0,
+  fameMult: 1.0,
+  reqFame: 0,
+  desc: "Full control. Low reach. Every rupee is yours."
+}, {
+  key: "mid",
+  label: "Mid-Tier Label / Studio",
+  royaltyRate: 0.60,
+  advance: 50000,
+  fameMult: 1.3,
+  reqFame: 20,
+  desc: "Decent promotion, reasonable deal. Good starting ladder."
+}, {
+  key: "major",
+  label: "Major Label / Studio",
+  royaltyRate: 0.40,
+  advance: 200000,
+  fameMult: 1.8,
+  reqFame: 45,
+  desc: "Massive reach. They own 60% of your output now."
+}, {
+  key: "global",
+  label: "Global Entertainment House",
+  royaltyRate: 0.30,
+  advance: 800000,
+  fameMult: 2.5,
+  reqFame: 70,
+  desc: "You are the product. Huge, but you answer to them."
+}];
+const ARTS_MILESTONES = {
+  musician: ["First Single Drop", "First Album", "Gold Record", "Platinum Record", "Stadium Tour", "Icon Status"],
+  actor: ["First Film Role", "Lead Role", "Box Office Hit", "Award Nomination", "Award Win", "Cultural Icon"],
+  painter: ["First Gallery Show", "Solo Exhibition", "Critical Acclaim", "Major Collection Buy", "Retrospective", "Museum Collection"],
+  writer: ["First Publication", "First Book", "Bestseller List", "Literary Award", "Adapted to Screen", "Decade's Defining Voice"]
+};
+const RIVAL_POLITICIANS = [{
+  key: "iyer",
+  name: "Suresh Iyer",
+  party: "bpa",
+  pop: 52,
+  smarts: 65,
+  label: "Party Veteran"
+}, {
+  key: "mehta",
+  name: "Priyanka Mehta",
+  party: "sm",
+  pop: 58,
+  smarts: 72,
+  label: "People's Champion"
+}, {
+  key: "khatri",
+  name: "Arvind Khatri",
+  party: "nnp",
+  pop: 45,
+  smarts: 60,
+  label: "Reform Candidate"
+}, {
+  key: "nair",
+  name: "Devika Nair",
+  party: "mk",
+  pop: 48,
+  smarts: 58,
+  label: "Regional Strongman"
+}, {
+  key: "sharma",
+  name: "Rajesh Sharma",
+  party: "bpa",
+  pop: 61,
+  smarts: 78,
+  label: "Establishment Veteran"
+}, {
+  key: "pillai",
+  name: "Meera Pillai",
+  party: "sm",
+  pop: 55,
+  smarts: 68,
+  label: "Grassroots Leader"
+}, {
+  key: "thapar",
+  name: "Vikram Thapar",
+  party: "nnp",
+  pop: 43,
+  smarts: 64,
+  label: "Anti-Corruption Voice"
+}];
+const CAMPAIGN_ACTIONS = [{
+  key: "rally",
+  label: "Hold a Public Rally",
+  desc: "Take to the streets. Big crowds, big energy. Reputation-amplified.",
+  cost: 3000,
+  bonusBase: 0.06,
+  statKey: "reputation",
+  statDiv: 500,
+  popularityGain: 3,
+  icon: Trophy
+}, {
+  key: "debate",
+  label: "Challenge Rival to Debate",
+  desc: "Face them live on television. Smarts win this round — or humiliate you.",
+  cost: 0,
+  bonusBase: 0.03,
+  statKey: "smarts",
+  statDiv: 400,
+  popularityGain: 2,
+  rivalDebuff: 0.04,
+  icon: Brain
+}, {
+  key: "ads",
+  label: "Buy an Ad Blitz",
+  desc: "Flood every screen in the constituency. Money is the great equaliser.",
+  cost: 15000,
+  bonusBase: 0.10,
+  popularityGain: 2,
+  icon: TrendingUp
+}, {
+  key: "grassroots",
+  label: "Door-to-Door Campaign",
+  desc: "Volunteers knock on every door. Slower, but it builds real trust.",
+  cost: 1000,
+  bonusBase: 0.04,
+  statKey: "happiness",
+  statDiv: 600,
+  popularityGain: 5,
+  icon: Heart
+}, {
+  key: "promise",
+  label: "Make a Campaign Promise",
+  desc: "Pledge a specific policy to voters. Big boost — but you are bound to it next term.",
+  cost: 0,
+  bonusBase: 0.09,
+  popularityGain: 4,
+  requiresLawChoice: true,
+  icon: Landmark
+}, {
+  key: "attack",
+  label: "Go Negative on Rival",
+  desc: "Attack your opponent's record. Effective — but 25% chance it rebounds on your reputation.",
+  cost: 2000,
+  bonusBase: 0.05,
+  rivalDebuff: 0.07,
+  reputationRisk: true,
+  popularityGain: 1,
+  icon: Skull
+}];
 const FRESH_CHAR = () => ({
   name: "",
   age: 0,
@@ -3065,6 +3571,27 @@ const FRESH_CHAR = () => ({
   businessLevel: 0,
   collegeYearsLeft: 0,
   jobHopCooldown: 0,
+  sportsCareer: {
+    rating: 45,
+    sponsorships: [],
+    // [{ key }]
+    trophies: [],
+    tournamentWins: 0,
+    rankingPoints: 0 // tennis/athletics world ranking proxy
+  },
+  artsCareer: {
+    fame: 0,
+    label: "indie",
+    works: 0,
+    streakHits: 0,
+    nextWorkBonus: false,
+    toursDone: 0,
+    milestones: [],
+    discography: [],
+    // [{ title, type, plays, peakChart, releaseAge }]
+    totalStreams: 0,
+    paintings: [] // [{ title, value, createdAge, sold }]
+  },
   rel: {
     stage: "single",
     partner: null,
@@ -3094,7 +3621,23 @@ const FRESH_CHAR = () => ({
     economyModifier: 0,
     economyYearsLeft: 0,
     lawsPassed: [],
-    partyOfferCooldown: 0
+    partyOfferCooldown: 0,
+    campaignPledge: null,
+    // law pledged during campaign
+    currentRival: null,
+    // name of rival you last faced
+    coalitionPartner: null // party key of coalition partner (PM only)
+  },
+  campaign: {
+    active: false,
+    tierKey: null,
+    rival: null,
+    // RIVAL_POLITICIANS entry
+    actionsLeft: 3,
+    bonusChance: 0,
+    rivalDebuff: 0,
+    isReelection: false,
+    pledgedLaw: null
   },
   party: {
     affiliation: null,
@@ -3158,11 +3701,10 @@ const FRESH_CHAR = () => ({
   },
   lifestyle: {
     assets: [],
-    // [{ key, label, sub, purchasePrice, currentValue, repBoost, happBoost? }]
     totalPhilanthropy: 0,
     philanthropy: [],
-    // [{ key, label, age }]
-    checkedUpThisYear: false
+    checkedUpThisYear: false,
+    agencies: [] // active subscriptions [{ key }]
   },
   netWorthPeak: 0,
   log: [],
@@ -3476,80 +4018,218 @@ function OneLifeDossier() {
       return meetsRep && c.politics.popularity >= requiredPop;
     });
   }
-  function runForOffice(tierKey) {
-    setCampaignSpend("");
-    setPendingDecision({
-      type: "election",
-      tierKey,
-      reelection: false
-    });
-  }
-  function launchCampaign() {
-    const spend = Math.max(0, Number(campaignSpend) || 0);
+
+  /* ─── Campaign system ─────────────────────────────────────────── */
+
+  function runForOffice(tierKey, isReelection = false) {
+    // Pick a rival from opposing party (or any if independent)
+    const myParty = char.party.affiliation;
+    const pool = RIVAL_POLITICIANS.filter(r => r.party !== myParty);
+    const rival = pool[Math.floor(Math.random() * pool.length)];
     setChar(prev => {
       const c = structuredClone(prev);
-      const dec = pendingDecision;
-      if (!dec) return prev;
-      const tier = POLITICAL_TIERS.find(t => t.key === dec.tierKey);
-      const affordSpend = Math.min(spend, c.cash);
-      c.cash -= affordSpend;
+      c.campaign = {
+        active: true,
+        tierKey,
+        rival,
+        actionsLeft: 3,
+        bonusChance: 0,
+        rivalDebuff: 0,
+        isReelection,
+        pledgedLaw: null
+      };
+      c.politics.currentRival = rival.name;
+      return c;
+    });
+    setPendingDecision({
+      type: "campaign_action"
+    });
+  }
+  function takeCampaignAction(actionKey, pledgedLawKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const act = CAMPAIGN_ACTIONS.find(a => a.key === actionKey);
+      if (!act) return prev;
 
-      // Party contribution — party doubles your effective spend up to their own cap
-      const party = c.party.affiliation ? POLITICAL_PARTIES[c.party.affiliation] : null;
-      let partyContribution = 0;
-      if (party && c.party.standing > 20) {
-        const capByRank = [500, 2000, 5000, 12000][c.party.rankIdx] || 500;
-        partyContribution = Math.min(capByRank, affordSpend);
+      // Deduct cost
+      const cost = act.cost || 0;
+      if (c.cash < cost) return prev;
+      c.cash -= cost;
+
+      // Calculate bonus chance
+      const statBonus = act.statKey ? (c.stats[act.statKey] - 50) / (act.statDiv || 400) : 0;
+      const bonus = (act.bonusBase || 0) + Math.max(0, statBonus);
+      c.campaign.bonusChance = (c.campaign.bonusChance || 0) + bonus;
+      c.campaign.rivalDebuff = (c.campaign.rivalDebuff || 0) + (act.rivalDebuff || 0);
+
+      // Popularity bump
+      if (act.popularityGain) c.politics.popularity = clamp(c.politics.popularity + act.popularityGain);
+
+      // Promise binds you to a law
+      if (act.requiresLawChoice && pledgedLawKey) {
+        c.campaign.pledgedLaw = pledgedLawKey;
+        c.politics.campaignPledge = pledgedLawKey;
       }
-      const effectiveSpend = affordSpend + partyContribution;
-      let chance = 0.20 + (c.stats.reputation - tier.repReq) / 180 + (c.politics.popularity - tier.popReq) / 200 + c.stats.smarts / 500 + Math.min(effectiveSpend, 15000) / 15000 * 0.28;
-      if (party && c.party.standing > 20) chance += 0.08 + c.party.standing / 400;
-      if (dec.reelection) chance += (c.politics.approval - 50) / 150;
-      // Independent penalty at high tiers
-      if (!party && (tier.key === "governor" || tier.key === "national")) chance -= 0.15;
-      chance = Math.max(0.05, Math.min(0.92, chance));
-      if (Math.random() < chance) {
+
+      // Attack backfire
+      if (act.reputationRisk && Math.random() < 0.25) {
+        applyEffects(c, {
+          reputation: -5
+        });
+        pushLog(c, {
+          text: "Your attack ad backfired — press called it desperate.",
+          tone: "politics"
+        });
+      }
+      c.campaign.actionsLeft = (c.campaign.actionsLeft || 0) - 1;
+      pushLog(c, {
+        text: `Campaign: ${act.label}. Momentum building.`,
+        tone: "politics"
+      });
+      return c;
+    });
+
+    // More actions, or go to election day
+    setChar(prev => {
+      if ((prev.campaign.actionsLeft || 0) > 0) {
+        setPendingDecision({
+          type: "campaign_action"
+        });
+      } else {
+        setPendingDecision({
+          type: "election_day"
+        });
+      }
+      return prev;
+    });
+  }
+  function resolveElectionDay() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const tierKey = c.campaign.tierKey;
+      const tier = POLITICAL_TIERS.find(t => t.key === tierKey);
+      const rival = c.campaign.rival;
+      const party = c.party.affiliation ? POLITICAL_PARTIES[c.party.affiliation] : null;
+
+      // Party contribution based on rank
+      let partyContrib = 0;
+      if (party && c.party.standing > 20) {
+        const cap = [1000, 3000, 8000, 20000][c.party.rankIdx] || 1000;
+        partyContrib = cap;
+        c.cash += 0; // party funds go directly to boost
+      }
+
+      // Build win chance from all sources
+      let chance = 0.20 + (c.stats.reputation - tier.repReq) / 180 + (c.politics.popularity - tier.popReq) / 200 + c.stats.smarts / 500 + (c.campaign.bonusChance || 0) + (party ? 0.08 + c.party.standing / 400 : 0);
+      if (c.campaign.isReelection) chance += (c.politics.approval - 50) / 150;
+      if (!party && (tier.key === "governor" || tier.key === "national")) chance -= 0.18;
+
+      // Rival debuff (your attack ads and debates)
+      const rivalPop = (rival?.pop || 50) - Math.round((c.campaign.rivalDebuff || 0) * 100);
+      const rivalChance = Math.max(0.10, rivalPop / 100);
+      const finalChance = Math.max(0.05, Math.min(0.92, chance));
+      const won = Math.random() < finalChance;
+      if (won) {
+        // PM election: coalition check
+        if (tier.key === "national" && !party) {
+          // Independent PM needs supermajority — harder
+        }
+        if (tier.key === "national" && party && Math.random() < 0.40) {
+          // No majority — need coalition
+          const others = Object.values(POLITICAL_PARTIES).filter(p => p.key !== party.key);
+          const partner = others[Math.floor(Math.random() * others.length)];
+          c.campaign.active = false;
+          setPendingDecision({
+            type: "coalition",
+            tierKey,
+            partner
+          });
+          return c;
+        }
+
+        // Clean win
         c.politics.office = tier.key;
         c.politics.termYearsLeft = tier.termLength;
-        c.politics.approval = 55;
+        c.politics.approval = 58;
         c.politics.termsServed[tier.key] += 1;
         c.politics.lawProposedThisTerm = false;
         c.politics.electionCooldown = 0;
         c.politics.popularity = clamp(c.politics.popularity + tier.popularityBoost);
-        // Rank bump: first win as party member promotes to MP
         if (party && c.party.rankIdx < 1) c.party.rankIdx = 1;
-        const contribNote = partyContribution > 0 ? ` (${party.short} chipped in ${money(partyContribution)})` : "";
+        if (c.campaign.pledgedLaw) c.politics.campaignPledge = c.campaign.pledgedLaw;
+        const note = party ? ` (${party.short} backed the campaign)` : " (ran as Independent)";
         pushLog(c, {
-          text: `You won and were sworn in as ${tier.label}${contribNote}.`,
+          text: `Election won. You defeated ${rival?.name || "your opponent"} and were sworn in as ${tier.label}${note}.`,
           tone: "politics"
         });
       } else {
         c.politics.electionCooldown = 1;
-        if (dec.reelection) {
+        if (c.campaign.isReelection) {
           c.politics.office = null;
           c.politics.termYearsLeft = 0;
         }
         applyEffects(c, {
-          reputation: -3
+          reputation: -4
         });
-        c.politics.popularity = clamp(c.politics.popularity - 4);
-        if (party) c.party.standing = clamp(c.party.standing - 5, -100, 100);
+        c.politics.popularity = clamp(c.politics.popularity - 5);
+        if (party) c.party.standing = clamp(c.party.standing - 8, -100, 100);
         pushLog(c, {
-          text: `You lost the race for ${tier.label}. The campaign trail wasn't kind.`,
+          text: `Election lost to ${rival?.name || "your opponent"}. The campaign hurt more than it helped.`,
+          tone: "politics"
+        });
+      }
+      c.campaign = {
+        active: false,
+        tierKey: null,
+        rival: null,
+        actionsLeft: 3,
+        bonusChance: 0,
+        rivalDebuff: 0,
+        isReelection: false,
+        pledgedLaw: null
+      };
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function resolveCoalition(accept, partnerKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const tier = POLITICAL_TIERS.find(t => t.key === "national");
+      const party = c.party.affiliation ? POLITICAL_PARTIES[c.party.affiliation] : null;
+      const partner = POLITICAL_PARTIES[partnerKey];
+      if (accept) {
+        c.politics.office = "national";
+        c.politics.termYearsLeft = tier.termLength;
+        c.politics.approval = 52;
+        c.politics.termsServed.national += 1;
+        c.politics.lawProposedThisTerm = false;
+        c.politics.electionCooldown = 0;
+        c.politics.popularity = clamp(c.politics.popularity + tier.popularityBoost);
+        c.politics.coalitionPartner = partnerKey;
+        if (party && c.party.rankIdx < 1) c.party.rankIdx = 1;
+        pushLog(c, {
+          text: `You formed a coalition with ${partner.label}. You are Prime Minister — but they'll extract a price.`,
+          tone: "politics"
+        });
+      } else {
+        c.politics.electionCooldown = 2;
+        c.politics.popularity = clamp(c.politics.popularity - 8);
+        pushLog(c, {
+          text: "Coalition talks broke down. New elections called. The country waits.",
           tone: "politics"
         });
       }
       return c;
     });
     setPendingDecision(null);
-    setCampaignSpend("");
   }
   function retireFromOffice() {
     setChar(prev => {
       const c = structuredClone(prev);
       const tier = POLITICAL_TIERS.find(t => t.key === c.politics.office);
       pushLog(c, {
-        text: `You chose to retire from office as ${tier?.label || "a public servant"}.`,
+        text: `You retired from office as ${tier?.label || "a public servant"}.`,
         tone: "politics"
       });
       c.politics.office = null;
@@ -4308,6 +4988,379 @@ function OneLifeDossier() {
     });
   }
 
+  /* ---------------- sports career ---------------- */
+
+  function doSportsTraining(actionKey) {
+    const act = SPORTS_TRAINING_ACTIONS.find(a => a.key === actionKey);
+    if (!act) return;
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.cash < act.cost) return prev;
+      c.cash -= act.cost;
+      if (act.rating) c.sportsCareer.rating = clamp(c.sportsCareer.rating + act.rating);
+      if (act.health) c.stats.health = clamp(c.stats.health + act.health);
+      if (act.happiness) c.stats.happiness = clamp(c.stats.happiness + act.happiness);
+      if (act.smarts) c.stats.smarts = clamp(c.stats.smarts + act.smarts);
+      pushLog(c, {
+        text: `Sports: ${act.label}. Rating: ${c.sportsCareer.rating}.${act.cost > 0 ? ` Cost: ${money(act.cost)}.` : ""}`,
+        tone: "neutral"
+      });
+      return c;
+    });
+  }
+  function enterTournament() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.path !== "sports" || !c.specialization) return prev;
+      const rivals = SPORTS_RIVALS[c.specialization] || [];
+      const rival = pick(rivals);
+      const myRating = c.sportsCareer.rating;
+      const rivalRating = rival?.rating || 65;
+      const winChance = 0.20 + (myRating - rivalRating) / 150 + c.stats.health / 400;
+      const spec = SPORTS[c.specialization];
+      if (Math.random() < Math.max(0.1, Math.min(0.9, winChance))) {
+        const prize = Math.round((spec?.base || 2000) * (1 + myRating / 60) + rnd(10000, 30000));
+        c.cash += prize;
+        c.sportsCareer.rating = clamp(c.sportsCareer.rating + 3);
+        c.sportsCareer.tournamentWins += 1;
+        c.sportsCareer.rankingPoints += Math.round(10 + myRating / 10);
+        applyEffects(c, {
+          reputation: 3
+        });
+        // Trophy milestone check
+        const trophies = SPORTS_TROPHIES[c.specialization] || [];
+        const earned = trophies[Math.min(c.sportsCareer.trophies.length, trophies.length - 1)];
+        if (earned && !c.sportsCareer.trophies.includes(earned)) {
+          c.sportsCareer.trophies.push(earned);
+          pushLog(c, {
+            text: `🏆 Trophy earned: ${earned}!`,
+            tone: "money-up"
+          });
+        }
+        pushLog(c, {
+          text: `Tournament win against ${rival?.name}! Prize: ${money(prize)}. Career Rating: ${c.sportsCareer.rating}.`,
+          tone: "money-up"
+        });
+      } else {
+        c.sportsCareer.rating = clamp(c.sportsCareer.rating - 1);
+        c.sportsCareer.rankingPoints = Math.max(0, c.sportsCareer.rankingPoints - 5);
+        pushLog(c, {
+          text: `Tournament loss to ${rival?.name}. Keep training. Rating: ${c.sportsCareer.rating}.`,
+          tone: "money-down"
+        });
+      }
+      return c;
+    });
+  }
+  function signSportsSponsor(sponsorKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const sp = SPORTS_SPONSORS.find(s => s.key === sponsorKey);
+      if (!sp || c.sportsCareer.rating < sp.reqRating) return prev;
+      if (c.sportsCareer.sponsorships.find(s => s.key === sponsorKey)) return prev;
+      c.sportsCareer.sponsorships = [...c.sportsCareer.sponsorships, {
+        key: sponsorKey
+      }];
+      applyEffects(c, {
+        reputation: sp.rep
+      });
+      pushLog(c, {
+        text: `Signed with ${sp.label}. Annual deal: ${money(sp.income)}/yr + ${sp.rep} reputation.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function cancelSportsSponsor(key) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      c.sportsCareer.sponsorships = c.sportsCareer.sponsorships.filter(s => s.key !== key);
+      pushLog(c, {
+        text: `Dropped sponsorship deal.`,
+        tone: "neutral"
+      });
+      return c;
+    });
+  }
+
+  /* ---------------- arts career ---------------- */
+
+  function doArtsAction(actionKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const act = ARTS_ACTIONS.find(a => a.key === actionKey);
+      if (!act) return prev;
+      if (c.cash < act.cost) return prev;
+      c.cash -= act.cost;
+      const spec = ARTS[c.specialization];
+      const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
+      if (act.type === "release") {
+        // Quality check: fame + smarts + streak + bonus
+        const qualityScore = c.artsCareer.fame / 2 + c.stats.smarts / 3 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (act.isMajor ? 15 : 0);
+        const hitChance = Math.min(0.90, 0.20 + qualityScore / 200 + (spec?.hitChance || 0.06));
+        c.artsCareer.nextWorkBonus = false;
+        c.artsCareer.works += 1;
+        if (Math.random() < hitChance) {
+          // HIT
+          const basePayout = (spec?.hitMult || 20) * (Math.round(spec?.base || 1500) + c.artsCareer.fame * 40);
+          const payout = Math.round(basePayout * label.fameMult * (act.isMajor ? 2 : 1) * label.royaltyRate);
+          c.cash += payout;
+          c.artsCareer.fame = clamp(c.artsCareer.fame + (act.isMajor ? 12 : 7));
+          c.artsCareer.streakHits += 1;
+          applyEffects(c, {
+            reputation: spec?.hitRep || 6
+          });
+          // Milestone
+          const milestones = ARTS_MILESTONES[c.specialization] || [];
+          const idx = Math.min(c.artsCareer.milestones.length, milestones.length - 1);
+          const earned = milestones[idx];
+          if (earned && !c.artsCareer.milestones.includes(earned)) {
+            c.artsCareer.milestones.push(earned);
+            pushLog(c, {
+              text: `🎖 Milestone: ${earned}!`,
+              tone: "money-up"
+            });
+          }
+          pushLog(c, {
+            text: `${act.label}: HIT! Streak: ${c.artsCareer.streakHits}. Payout: ${money(payout)}. Fame: ${c.artsCareer.fame}.`,
+            tone: "money-up"
+          });
+        } else {
+          // MISS
+          c.artsCareer.streakHits = 0;
+          c.artsCareer.fame = clamp(c.artsCareer.fame - 2);
+          pushLog(c, {
+            text: `${act.label}: missed the mark. Streak broken. Keep creating.`,
+            tone: "money-down"
+          });
+        }
+      } else if (act.type === "tour") {
+        const tourIncome = Math.round(act.cost * (2 + c.artsCareer.fame / 20) * label.fameMult);
+        c.cash += tourIncome;
+        c.artsCareer.fame = clamp(c.artsCareer.fame + 8);
+        c.artsCareer.toursDone += 1;
+        applyEffects(c, {
+          reputation: 4,
+          happiness: 5
+        });
+        pushLog(c, {
+          text: `Tour completed. Revenue: ${money(tourIncome)}. Fame: ${c.artsCareer.fame}.`,
+          tone: "money-up"
+        });
+      } else if (act.type === "collab") {
+        c.artsCareer.fame = clamp(c.artsCareer.fame + 5);
+        applyEffects(c, {
+          happiness: 4,
+          reputation: 2
+        });
+        pushLog(c, {
+          text: `Collaboration done. Cross-audience reach growing. Fame: ${c.artsCareer.fame}.`,
+          tone: "neutral"
+        });
+      } else if (act.type === "commercial") {
+        const cashGain = Math.round(30000 + Math.random() * 50000);
+        c.cash += cashGain;
+        c.artsCareer.fame = clamp(c.artsCareer.fame - 3);
+        c.artsCareer.streakHits = 0;
+        pushLog(c, {
+          text: `Commercial work done. Earned ${money(cashGain)}. Some fans aren't pleased.`,
+          tone: "money-up"
+        });
+      } else if (act.type === "study") {
+        c.artsCareer.nextWorkBonus = true;
+        pushLog(c, {
+          text: `Invested in craft. Next release will have a quality boost.`,
+          tone: "neutral"
+        });
+      } else if (act.type === "pr") {
+        c.artsCareer.fame = clamp(c.artsCareer.fame + 6);
+        c.politics.popularity = clamp(c.politics.popularity + 3);
+        pushLog(c, {
+          text: `Media blitz complete. Fame: ${c.artsCareer.fame}.`,
+          tone: "neutral"
+        });
+      }
+      return c;
+    });
+  }
+  function signLabel(labelKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const lbl = ARTS_LABELS.find(l => l.key === labelKey);
+      if (!lbl || c.artsCareer.fame < lbl.reqFame) return prev;
+      const prev_label = ARTS_LABELS.find(l => l.key === c.artsCareer.label);
+      c.artsCareer.label = labelKey;
+      if (lbl.advance > 0) c.cash += lbl.advance;
+      pushLog(c, {
+        text: `Signed with ${lbl.label}${lbl.advance > 0 ? ` — ${money(lbl.advance)} advance` : ""}. Royalty rate: ${Math.round(lbl.royaltyRate * 100)}%.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+
+  /* ---------------- musician: singles & albums ---------------- */
+
+  function releaseMusic(type) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const isAlbum = type === "album";
+      const cost = isAlbum ? 20000 : 2000;
+      if (c.cash < cost) return prev;
+      c.cash -= cost;
+      const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
+      const isCreative = c.traits.includes("creative");
+      const title = isAlbum ? genAlbumTitle() : genSongTitle();
+
+      // Hit quality check
+      const quality = c.artsCareer.fame / 2 + c.stats.smarts / 4 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (isAlbum ? 10 : 0) + (isCreative ? 15 : 0);
+      const hitChance = Math.min(0.88, 0.15 + quality / 180);
+      c.artsCareer.nextWorkBonus = false;
+      c.artsCareer.works += 1;
+      let plays = 0;
+      let peakChart = null;
+      if (Math.random() < hitChance) {
+        // Hit: calculate streams
+        const baseStreams = isAlbum ? Math.round((200000 + Math.random() * 5000000) * (1 + c.artsCareer.fame / 30) * label.fameMult * (isCreative ? 1.4 : 1)) : Math.round((50000 + Math.random() * 2000000) * (1 + c.artsCareer.fame / 40) * label.fameMult * (isCreative ? 1.4 : 1));
+        plays = baseStreams;
+        peakChart = Math.max(1, Math.round(100 - quality / 1.5 - Math.random() * 20));
+        const royaltyPayout = Math.round(plays * 0.003 * label.royaltyRate);
+        c.cash += royaltyPayout;
+        c.artsCareer.totalStreams += plays;
+        c.artsCareer.fame = clamp(c.artsCareer.fame + (isAlbum ? 10 : 5));
+        c.artsCareer.streakHits += 1;
+        applyEffects(c, {
+          reputation: isAlbum ? 6 : 3
+        });
+
+        // Chart milestone
+        if (peakChart === 1) {
+          const m = `"${title}" hit #1 on the charts`;
+          if (!c.artsCareer.milestones.includes(m)) c.artsCareer.milestones.push(m);
+        }
+        // General milestone
+        const ms = ARTS_MILESTONES[c.specialization] || [];
+        const earned = ms[Math.min(c.artsCareer.milestones.length, ms.length - 1)];
+        if (earned && !c.artsCareer.milestones.find(m => m === earned)) c.artsCareer.milestones.push(earned);
+        pushLog(c, {
+          text: `🎵 "${title}" (${isAlbum ? "Album" : "Single"}) — Hit! ${(plays / 1000000).toFixed(1)}M streams, peaked at #${peakChart}. Royalties: ${money(royaltyPayout)}.`,
+          tone: "money-up"
+        });
+
+        // Label offer check — if independent and fame high enough
+        if (c.artsCareer.label === "indie" && c.artsCareer.fame >= 20 && Math.random() < 0.25) {
+          setTimeout(() => setPendingDecision({
+            type: "label_offer"
+          }), 0);
+        }
+      } else {
+        plays = Math.round(1000 + Math.random() * 20000);
+        c.artsCareer.totalStreams += plays;
+        c.artsCareer.streakHits = 0;
+        c.artsCareer.fame = clamp(c.artsCareer.fame - 1);
+        pushLog(c, {
+          text: `🎵 "${title}" (${isAlbum ? "Album" : "Single"}) — didn't connect. ${(plays / 1000).toFixed(0)}K streams. Streak broken.`,
+          tone: "money-down"
+        });
+      }
+      c.artsCareer.discography = [...c.artsCareer.discography, {
+        title,
+        type,
+        plays,
+        peakChart,
+        releaseAge: c.age
+      }];
+      return c;
+    });
+  }
+
+  /* ---------------- painter: portfolio system ---------------- */
+
+  function createPainting() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const isCreative = c.traits.includes("creative");
+      const title = genPaintingTitle();
+      // Initial value based on fame + smarts + creativity
+      const baseVal = Math.round((c.artsCareer.fame * 800 + c.stats.smarts * 300 + c.artsCareer.works * 200 + Math.random() * 10000) * (isCreative ? 1.5 : 1));
+      const value = Math.max(500, baseVal);
+      c.artsCareer.paintings.push({
+        title,
+        value,
+        createdAge: c.age,
+        sold: false
+      });
+      c.artsCareer.works += 1;
+      c.artsCareer.fame = clamp(c.artsCareer.fame + 2);
+      pushLog(c, {
+        text: `🎨 Created "${title}". Initial valuation: ${money(value)}.`,
+        tone: "neutral"
+      });
+      return c;
+    });
+  }
+  function sellPainting(idx) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const painting = c.artsCareer.paintings[idx];
+      if (!painting || painting.sold) return prev;
+      c.cash += painting.value;
+      c.artsCareer.paintings[idx] = {
+        ...painting,
+        sold: true
+      };
+      applyEffects(c, {
+        reputation: 2
+      });
+      pushLog(c, {
+        text: `Sold "${painting.title}" for ${money(painting.value)}.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+  }
+  function holdGalleryShow() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const cost = 15000;
+      if (c.cash < cost) return prev;
+      c.cash -= cost;
+      const unsold = c.artsCareer.paintings.filter(p => !p.sold);
+      if (unsold.length === 0) return prev;
+      let totalSold = 0;
+      const sellCount = Math.max(1, Math.floor(unsold.length * (0.4 + c.artsCareer.fame / 200)));
+      const toSell = unsold.slice(0, sellCount);
+      toSell.forEach(p => {
+        const salePrice = Math.round(p.value * (1 + rnd(0.05, 0.3)));
+        c.cash += salePrice;
+        totalSold += salePrice;
+        const idx = c.artsCareer.paintings.findIndex(x => x.title === p.title && !x.sold);
+        if (idx >= 0) c.artsCareer.paintings[idx] = {
+          ...c.artsCareer.paintings[idx],
+          sold: true,
+          value: salePrice
+        };
+      });
+      c.artsCareer.fame = clamp(c.artsCareer.fame + 6);
+      applyEffects(c, {
+        reputation: 5,
+        happiness: 4
+      });
+
+      // Milestone
+      const ms = ARTS_MILESTONES[c.specialization] || [];
+      const earned = ms[Math.min(c.artsCareer.milestones.length, ms.length - 1)];
+      if (earned && !c.artsCareer.milestones.find(m => m === earned)) c.artsCareer.milestones.push(earned);
+      pushLog(c, {
+        text: `Gallery Show: sold ${toSell.length} paintings for ${money(totalSold)} total. Fame +6.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+  }
+
   /* ---------------- achievement checker ---------------- */
 
   function checkAchievements(c) {
@@ -4388,7 +5441,7 @@ function OneLifeDossier() {
     }
   }
 
-  /* ---------------- lifestyle: health, assets, philanthropy ---------------- */
+  /* ---------------- lifestyle: health, assets, philanthropy, PR ---------------- */
 
   function doHealthAction(key) {
     const act = HEALTH_ACTIONS.find(a => a.key === key);
@@ -4408,6 +5461,75 @@ function OneLifeDossier() {
       return c;
     });
   }
+  function doPRAction(key) {
+    const act = PR_ACTIONS.find(a => a.key === key);
+    if (!act) return;
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.cash < act.cost) return prev;
+      c.cash -= act.cost;
+      if (act.cashback) c.cash += act.cashback;
+      let rep = act.rep || 0;
+      let pop = act.pop || 0;
+
+      // Speech: smarts-dependent
+      if (act.repMult) {
+        const bonus = Math.floor((c.stats.smarts - 40) / 10);
+        rep = Math.max(0, 3 + bonus);
+        pop = Math.max(0, 2 + Math.floor(bonus / 2));
+        if (c.stats.smarts < 45) {
+          rep = 0;
+          pop = -3;
+          pushLog(c, {
+            text: `Public Speech: the delivery fell flat. Credibility dipped.`,
+            tone: "money-down"
+          });
+        }
+      }
+      c.stats.reputation = clamp(c.stats.reputation + rep);
+      c.politics.popularity = clamp(c.politics.popularity + pop);
+      if (!act.repMult) pushLog(c, {
+        text: `PR: ${act.label}. Rep +${rep}, Popularity +${pop}${act.cashback ? `, brand fee +${money(act.cashback)}` : ""}.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+  }
+  function subscribeAgency(key) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const ag = AGENCIES.find(a => a.key === key);
+      if (!ag) return prev;
+      if ((c.lifestyle.agencies || []).find(a => a.key === key)) return prev;
+      // First year cost upfront
+      if (c.cash < ag.costPerYear) return prev;
+      c.cash -= ag.costPerYear;
+      c.lifestyle.agencies = [...(c.lifestyle.agencies || []), {
+        key
+      }];
+      pushLog(c, {
+        text: `Signed with ${ag.label}. Annual retainer: ${money(ag.costPerYear)}/yr.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function cancelAgency(key) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const ag = AGENCIES.find(a => a.key === key);
+      c.lifestyle.agencies = (c.lifestyle.agencies || []).filter(a => a.key !== key);
+      pushLog(c, {
+        text: `Ended contract with ${ag?.label || "agency"}.`,
+        tone: "neutral"
+      });
+      return c;
+    });
+  }
+
+  /* ---------------- end lifestyle ---------------- */
+
   function buyAsset(key) {
     const def = findAsset(key);
     if (!def) return;
@@ -4734,85 +5856,174 @@ function OneLifeDossier() {
       } else if (c.path === "sports") {
         const spec = SPORTS[c.specialization];
         if (spec) {
-          const income = spec.base + c.stats.health * spec.hMult / 10 + c.stats.looks * spec.lMult / 10 + c.stats.reputation * spec.rMult / 10;
-          const finalIncome = Math.round(income);
+          // Career rating decays slightly each year (age, maintenance required)
+          const ageDrop = c.age > spec.retireAge - 6 ? 2 : 0;
+          c.sportsCareer.rating = clamp(c.sportsCareer.rating - ageDrop);
+
+          // Income: base + stats, multiplied by career rating (0.3x to 1.5x)
+          const ratingMult = 0.30 + c.sportsCareer.rating / 70;
+          const baseIncome = spec.base + c.stats.health * spec.hMult / 10 + c.stats.looks * spec.lMult / 10 + c.stats.reputation * spec.rMult / 10;
+          const finalIncome = Math.round(baseIncome * ratingMult);
           c.cash += finalIncome;
+
+          // Sponsorship passive income
+          let sponsorTotal = 0;
+          c.sportsCareer.sponsorships.forEach(sub => {
+            const sp = SPORTS_SPONSORS.find(s => s.key === sub.key);
+            if (sp) {
+              c.cash += sp.income;
+              sponsorTotal += sp.income;
+            }
+          });
+
+          // Injury
           if (Math.random() < spec.injuryRate) {
             const hit = Math.round(6 + Math.random() * 10);
             applyEffects(c, {
               health: -hit
             });
+            c.sportsCareer.rating = clamp(c.sportsCareer.rating - 5);
             entries.push({
-              text: `You picked up a serious injury this season. Lost ${hit} health.`,
+              text: `Serious injury this season. Health −${hit}, Rating −5.`,
               tone: "money-down"
             });
           }
-          // signature moment
+
+          // Signature moment
           if (Math.random() < spec.signature.chance) {
             const payout = Math.round(finalIncome * spec.signature.payoutMult);
             c.cash += payout;
             applyEffects(c, {
               reputation: spec.signature.rep
             });
+            c.sportsCareer.rating = clamp(c.sportsCareer.rating + 4);
             entries.push({
-              text: `${spec.signature.text(c)} Bonus & endorsements: ${money(payout)}.`,
+              text: `${spec.signature.text(c)} Bonus: ${money(payout)}.`,
               tone: "money-up"
             });
           }
-          // retirement — probability scales past retireAge
+          const earnedNote = sponsorTotal > 0 ? ` + ${money(sponsorTotal)} sponsors` : "";
+          entries.push({
+            text: `${spec.label} season: ${money(finalIncome)}${earnedNote}. Rating: ${c.sportsCareer.rating}.`,
+            tone: "money-up"
+          });
+
+          // Retirement
           if (c.age > spec.retireAge - 4 && Math.random() < 0.15 + Math.max(0, c.age - spec.retireAge) * 0.12) {
             c.path = "job";
             c.job = jobForIndustry(c, "media", false);
             const co = getCompany("media", c.job.company);
-            applyEffects(c, {
-              cash: finalIncome * 2
-            });
+            c.cash += finalIncome * 2;
             entries.push({
-              text: `You retired from ${spec.label.toLowerCase()} and moved into Media as a ${c.job.title} at ${co.label}.`,
+              text: `You retired from ${spec.label.toLowerCase()} with ${c.sportsCareer.tournamentWins} tournament wins and ${c.sportsCareer.trophies.length} trophies. Now at ${co.label} as ${c.job.title}.`,
               tone: "path"
-            });
-          } else {
-            entries.push({
-              text: `Another season as a ${spec.label.toLowerCase()} player. Earned ${money(finalIncome)}.`,
-              tone: "money-up"
             });
           }
         }
       } else if (c.path === "arts") {
         const spec = ARTS[c.specialization];
         if (spec) {
-          const income = spec.base + c.stats.reputation * spec.rMult / 10 + c.stats.looks * spec.lMult / 10 + (spec.sMult || 0) * c.stats.smarts / 10;
-          const finalIncome = Math.round(income);
+          const labelDef = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
+
+          // Fame passive decay
+          if (c.artsCareer.fame > 0 && Math.random() < 0.3) {
+            c.artsCareer.fame = clamp(c.artsCareer.fame - 1);
+          }
+
+          // Creative trait: additional fame maintenance
+          if (c.traits.includes("creative") && c.artsCareer.fame > 0) {
+            c.artsCareer.fame = clamp(c.artsCareer.fame + 1);
+          }
+
+          // Base passive income: scales with fame + label multiplier
+          const fameMult = 0.2 + c.artsCareer.fame / 80;
+          const passiveBase = spec.base + c.stats.reputation * spec.rMult / 10 + (spec.sMult || 0) * c.stats.smarts / 10;
+          const streakBonus = 1 + c.artsCareer.streakHits * 0.1;
+          const finalIncome = Math.round(passiveBase * fameMult * labelDef.fameMult * labelDef.royaltyRate * streakBonus);
           c.cash += finalIncome;
           if (spec.sMult) applyEffects(c, {
             smarts: 1
           });
-          // random hit
-          if (Math.random() < spec.hitChance) {
-            const payout = Math.round(finalIncome * spec.hitMult);
-            c.cash += payout;
-            applyEffects(c, {
-              reputation: spec.hitRep
+
+          // Musician: streaming royalties from back catalogue
+          if (c.specialization === "musician") {
+            const isCreative = c.traits.includes("creative");
+            // Each work gains annual plays based on fame
+            let newStreams = 0;
+            c.artsCareer.discography = (c.artsCareer.discography || []).map(track => {
+              const decay = track.type === "album" ? 0.85 : 0.70; // albums last longer
+              const fanBase = Math.round(track.plays * (1 - decay) * (1 + c.artsCareer.fame / 100) * (isCreative ? 1.2 : 1));
+              newStreams += fanBase;
+              return {
+                ...track,
+                plays: track.plays + fanBase
+              };
             });
-            entries.push({
-              text: `${spec.signatureText()} Payout: ${money(payout)}.`,
-              tone: "money-up"
+            c.artsCareer.totalStreams = (c.artsCareer.totalStreams || 0) + newStreams;
+            const streamingRoyalties = Math.round(newStreams * 0.003 * labelDef.royaltyRate);
+            if (streamingRoyalties > 0) {
+              c.cash += streamingRoyalties;
+              if (streamingRoyalties > 5000) entries.push({
+                text: `Streaming royalties from catalogue: ${money(streamingRoyalties)} (${(newStreams / 1000).toFixed(0)}K plays).`,
+                tone: "money-up"
+              });
+            }
+          }
+
+          // Painter: paintings appreciate, auction events
+          if (c.specialization === "painter") {
+            const unsoldCount = (c.artsCareer.paintings || []).filter(p => !p.sold).length;
+            c.artsCareer.paintings = (c.artsCareer.paintings || []).map(p => {
+              if (p.sold) return p;
+              const appRate = 0.10 + c.artsCareer.fame / 200 + rnd(-0.02, 0.05);
+              return {
+                ...p,
+                value: Math.round(p.value * (1 + appRate))
+              };
             });
-          } else if (Math.random() < 0.12) {
-            applyEffects(c, {
-              reputation: c.traits.includes("notorious") ? 5 : -5
-            });
-            entries.push({
-              text: `Your latest ${spec.label.toLowerCase()} work drew mixed press.`,
-              tone: "neutral"
-            });
-          } else {
-            entries.push({
-              text: `You worked as a ${spec.label.toLowerCase()} through the year. Earned ${money(finalIncome)}.`,
+            const portfolioVal = c.artsCareer.paintings.filter(p => !p.sold).reduce((s, p) => s + p.value, 0);
+            // Auction event: random high-value sale
+            if (unsoldCount > 0 && Math.random() < 0.08 + c.artsCareer.fame / 500) {
+              const topPainting = [...c.artsCareer.paintings].filter(p => !p.sold).sort((a, b) => b.value - a.value)[0];
+              if (topPainting) {
+                const auctionPrice = Math.round(topPainting.value * (3 + Math.random() * 3));
+                c.cash += auctionPrice;
+                const idx = c.artsCareer.paintings.findIndex(p => p.title === topPainting.title && !p.sold);
+                if (idx >= 0) c.artsCareer.paintings[idx] = {
+                  ...c.artsCareer.paintings[idx],
+                  sold: true,
+                  value: auctionPrice
+                };
+                applyEffects(c, {
+                  reputation: 8
+                });
+                entries.push({
+                  text: `🎨 Auction: "${topPainting.title}" sold for ${money(auctionPrice)} (${Math.round(auctionPrice / topPainting.value)}× valuation).`,
+                  tone: "money-up"
+                });
+              }
+            }
+            if (portfolioVal > 0 && unsoldCount > 0) entries.push({
+              text: `${spec.label}: portfolio of ${unsoldCount} unsold works valued at ${money(portfolioVal)}.`,
               tone: "money-up"
             });
           }
+          entries.push({
+            text: `${spec.label} royalties: ${money(finalIncome)} (Fame ${c.artsCareer.fame} · ${labelDef.label}${c.artsCareer.streakHits > 1 ? ` · 🔥${c.artsCareer.streakHits}-hit` : ""}).`,
+            tone: "money-up"
+          });
         }
+      }
+
+      // Charismatic trait: passive popularity maintenance
+      if (c.traits.includes("charismatic") && c.age >= 18) {
+        c.politics.popularity = clamp(c.politics.popularity + 1);
+        c.stats.reputation = clamp(c.stats.reputation + 1);
+      }
+      // Cunning trait: passive business/underworld income boost (handled in multipliers)
+      // — adds 1 smarts per year as a sustained sharpness
+      if (c.traits.includes("cunning") && c.age >= 18 && c.stats.smarts < 90) {
+        c.stats.smarts = clamp(c.stats.smarts + 1);
       }
 
       // politics: term countdown, scandal, impeachment
@@ -4825,14 +6036,24 @@ function OneLifeDossier() {
         if (c.politics.approval > 55) c.politics.popularity = clamp(c.politics.popularity + 1);else if (c.politics.approval < 35) c.politics.popularity = clamp(c.politics.popularity - 2);
         const scandalChance = 0.03 + (c.stats.reputation < 40 ? 0.05 : 0) + (c.traits.includes("notorious") ? 0.05 : 0) + (c.party.affiliation ? -0.02 : 0.02);
         if (Math.random() < scandalChance) {
-          c.politics.approval = clamp(c.politics.approval - 15);
+          // Crisis PR shield reduces scandal damage
+          const crisisShield = (c.lifestyle.agencies || []).reduce((s, sub) => {
+            const ag = AGENCIES.find(a => a.key === sub.key);
+            return s + (ag?.crisisShield || 0);
+          }, 0);
+          const shieldMult = Math.max(0.1, 1 - crisisShield);
+          const approvalHit = Math.round(15 * shieldMult);
+          const repHit = Math.round(8 * shieldMult);
+          const popHit = Math.round(6 * shieldMult);
+          c.politics.approval = clamp(c.politics.approval - approvalHit);
           applyEffects(c, {
-            reputation: -8
+            reputation: -repHit
           });
-          c.politics.popularity = clamp(c.politics.popularity - 6);
+          c.politics.popularity = clamp(c.politics.popularity - popHit);
           if (c.party.affiliation) c.party.standing = clamp(c.party.standing - 6, -100, 100);
+          const shieldNote = crisisShield > 0 ? ` (PR shield softened the blow by ${Math.round(crisisShield * 100)}%)` : "";
           entries.push({
-            text: "A scandal broke out during your time in office.",
+            text: `A scandal broke out during your time in office${shieldNote}.`,
             tone: "politics"
           });
         }
@@ -4856,11 +6077,7 @@ function OneLifeDossier() {
             });
             c.politics.office = null;
           } else {
-            setTimeout(() => setPendingDecision({
-              type: "election",
-              tierKey: tier.key,
-              reelection: true
-            }), 0);
+            setTimeout(() => runForOffice(tier.key, true), 0);
           }
         }
 
@@ -5416,6 +6633,44 @@ function OneLifeDossier() {
         };
       });
       c.lifestyle.checkedUpThisYear = false;
+
+      // agency subscription tick — deduct annual costs, apply passive boosts
+      const activeAgencies = c.lifestyle.agencies || [];
+      if (activeAgencies.length > 0) {
+        const agencyEntries = [];
+        const failed = [];
+        activeAgencies.forEach(sub => {
+          const ag = AGENCIES.find(a => a.key === sub.key);
+          if (!ag) return;
+          if (c.cash < ag.costPerYear) {
+            // Can't afford — agency drops
+            failed.push(sub.key);
+            agencyEntries.push({
+              text: `${ag.label} dropped — couldn't cover the ₹${(ag.costPerYear / 1000).toFixed(0)}k retainer.`,
+              tone: "money-down"
+            });
+            return;
+          }
+          c.cash -= ag.costPerYear;
+          // Apply passive rep + popularity
+          let repGain = ag.repPerYear || 0;
+          let popGain = ag.popPerYear || 0;
+          // Path bonus (celebrity management)
+          if (ag.pathBonus && ag.pathBonusExtra && ag.pathBonus.includes(c.path)) {
+            popGain += ag.pathBonusExtra.popPerYear || 0;
+          }
+          c.stats.reputation = clamp(c.stats.reputation + repGain);
+          c.politics.popularity = clamp(c.politics.popularity + popGain);
+          // Approval bonus for political agencies
+          if (ag.approvalBonus && c.politics.office) {
+            c.politics.approval = clamp(c.politics.approval + ag.approvalBonus);
+          }
+        });
+        if (failed.length) {
+          c.lifestyle.agencies = activeAgencies.filter(a => !failed.includes(a.key));
+        }
+        if (agencyEntries.length) pushLog(c, agencyEntries);
+      }
 
       // business stakes tick
       const stakeEntries = [];
@@ -6251,7 +7506,119 @@ function OneLifeDossier() {
       opacity: .7,
       flexShrink: 0
     }
-  }, money(act.cost))))))), activeTab === "career" && /*#__PURE__*/React.createElement("div", {
+  }, money(act.cost))))), /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
+    style: {
+      marginTop: 10
+    }
+  }, "Reputation & PR", (char.lifestyle.agencies || []).length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      fontSize: 9,
+      fontFamily: "IBM Plex Mono",
+      color: "var(--moss)"
+    }
+  }, " · ", (char.lifestyle.agencies || []).length, " active")), (char.lifestyle.agencies || []).length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, (char.lifestyle.agencies || []).map(sub => {
+    const ag = AGENCIES.find(a => a.key === sub.key);
+    if (!ag) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: sub.key,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 8px",
+        borderRadius: 3,
+        background: "rgba(92,122,94,.08)",
+        borderLeft: "3px solid var(--moss)",
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement(ag.icon, {
+      size: 11,
+      style: {
+        color: "var(--moss)",
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        fontSize: 11,
+        fontWeight: 600
+      }
+    }, ag.label), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        fontFamily: "IBM Plex Mono",
+        color: "var(--moss)"
+      }
+    }, money(ag.costPerYear), "/yr"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 9,
+        padding: "2px 6px",
+        border: "1px solid #b9ac8c",
+        borderRadius: 2,
+        cursor: "pointer",
+        background: "transparent",
+        color: "#7a6f5c"
+      },
+      onClick: () => cancelAgency(sub.key)
+    }, "✕"));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 4,
+      marginBottom: 5
+    }
+  }, PR_ACTIONS.map(act => /*#__PURE__*/React.createElement("button", {
+    key: act.key,
+    className: "btn btn-outline",
+    title: act.desc,
+    style: {
+      fontSize: 10,
+      padding: "5px 8px",
+      justifyContent: "space-between",
+      opacity: char.cash < (act.cost || 0) ? 0.4 : 1
+    },
+    onClick: () => doPRAction(act.key),
+    disabled: char.cash < (act.cost || 0)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement(act.icon, {
+    size: 11
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      maxWidth: 70
+    }
+  }, act.label)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "IBM Plex Mono",
+      fontSize: 9,
+      opacity: .7,
+      flexShrink: 0
+    }
+  }, act.cost > 0 ? money(act.cost) : "Free")))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-primary btn-block",
+    style: {
+      fontSize: 11
+    },
+    onClick: () => setPendingDecision({
+      type: "agency_catalog"
+    })
+  }, /*#__PURE__*/React.createElement(TrendingUp, {
+    size: 12
+  }), " Hire a PR Agency"))), activeTab === "career" && /*#__PURE__*/React.createElement("div", {
     className: "tab-2col"
   }, /*#__PURE__*/React.createElement("div", {
     className: "tcol"
@@ -6381,35 +7748,597 @@ function OneLifeDossier() {
       width: `${Math.min(100, char.businessLevel * 12)}%`,
       background: "var(--gold)"
     }
-  }))))) : char.path === "sports" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "career-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Fraunces', serif",
-      fontSize: 17,
-      fontWeight: 700
-    }
-  }, SPORTS[char.specialization]?.label || "Athlete"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#7a6f5c",
-      marginTop: 4
-    }
-  }, "Career until ~age ", SPORTS[char.specialization]?.retireAge || 35, " · ", SPORTS[char.specialization]?.injuryRate * 100 || 8, "% injury/yr"))) : char.path === "arts" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "career-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Fraunces', serif",
-      fontSize: 17,
-      fontWeight: 700
-    }
-  }, ARTS[char.specialization]?.label || "Artist"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#7a6f5c",
-      marginTop: 4
-    }
-  }, "Hit chance ", ARTS[char.specialization]?.hitChance * 100 || 6, "%/yr"))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }))))) : char.path === "sports" ? (() => {
+    const spec = SPORTS[char.specialization];
+    const rivals = SPORTS_RIVALS[char.specialization] || [];
+    const trophyList = SPORTS_TROPHIES[char.specialization] || [];
+    const rankingText = char.specialization === "tennis" || char.specialization === "athletics" ? `World Rank ~#${Math.max(1, Math.round(200 - char.sportsCareer.rankingPoints / 3))}` : null;
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "career-card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "'Fraunces',serif",
+        fontSize: 17,
+        fontWeight: 700
+      }
+    }, spec?.label || "Athlete"), rankingText && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--gold)",
+        fontFamily: "IBM Plex Mono",
+        marginTop: 2
+      }
+    }, rankingText)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 11,
+        color: "#7a6f5c"
+      }
+    }, "Career until ~", spec?.retireAge), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 11,
+        color: "var(--rust)"
+      }
+    }, (spec?.injuryRate || 0) * 100, "% injury risk/yr"))), /*#__PURE__*/React.createElement("div", {
+      className: "mini-bar-row",
+      style: {
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#7a6f5c",
+        width: 80
+      }
+    }, "Career Rating"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        height: 7,
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${char.sportsCareer.rating}%`,
+        background: char.sportsCareer.rating >= 70 ? "var(--gold)" : char.sportsCareer.rating >= 50 ? "var(--moss)" : "var(--rust)"
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 11,
+        width: 22,
+        textAlign: "right",
+        fontWeight: 700
+      }
+    }, char.sportsCareer.rating)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 14,
+        fontSize: 10,
+        color: "#7a6f5c",
+        marginTop: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "🏆 ", char.sportsCareer.tournamentWins, " wins"), /*#__PURE__*/React.createElement("span", null, "🎖 ", char.sportsCareer.trophies.length, " trophies"), /*#__PURE__*/React.createElement("span", null, "💼 ", char.sportsCareer.sponsorships.length, " sponsors"))), /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Train & Develop"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 5,
+        marginBottom: 10
+      }
+    }, SPORTS_TRAINING_ACTIONS.map(act => /*#__PURE__*/React.createElement("button", {
+      key: act.key,
+      className: "btn btn-outline",
+      title: act.desc,
+      style: {
+        fontSize: 10,
+        padding: "5px 8px",
+        justifyContent: "space-between",
+        opacity: char.cash < (act.cost || 0) ? 0.4 : 1
+      },
+      onClick: () => doSportsTraining(act.key),
+      disabled: char.cash < (act.cost || 0)
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement(act.icon, {
+      size: 11
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        maxWidth: 70
+      }
+    }, act.label)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 9,
+        opacity: .7
+      }
+    }, act.cost > 0 ? money(act.cost) : "Free")))), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary btn-block",
+      style: {
+        fontSize: 12,
+        marginBottom: 10
+      },
+      onClick: enterTournament
+    }, /*#__PURE__*/React.createElement(Trophy, {
+      size: 13
+    }), " Enter Tournament · vs ", rivals[Math.floor(Math.random() * rivals.length)]?.name || "Rival"), char.sportsCareer.trophies.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Trophies"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 4,
+        marginBottom: 8
+      }
+    }, char.sportsCareer.trophies.map((t, i) => /*#__PURE__*/React.createElement("span", {
+      key: i,
+      style: {
+        fontSize: 9,
+        fontFamily: "IBM Plex Mono",
+        background: "var(--gold)",
+        color: "var(--navy)",
+        padding: "2px 6px",
+        borderRadius: 2
+      }
+    }, "🏆 ", t)))), /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Known Rivals"), rivals.map((r, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "irow"
+    }, /*#__PURE__*/React.createElement("span", null, r.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10,
+        color: r.rating > char.sportsCareer.rating ? "var(--rust)" : "var(--moss)"
+      }
+    }, "Rating ", r.rating, " ", r.rating > char.sportsCareer.rating ? "↑" : "↓"))), char.sportsCareer.sponsorships.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title",
+      style: {
+        marginTop: 8
+      }
+    }, "Sponsorships"), char.sportsCareer.sponsorships.map(sub => {
+      const sp = SPORTS_SPONSORS.find(s => s.key === sub.key);
+      return sp ? /*#__PURE__*/React.createElement("div", {
+        key: sub.key,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "4px 8px",
+          borderRadius: 3,
+          background: "rgba(201,166,75,.08)",
+          borderLeft: "3px solid var(--gold)",
+          marginBottom: 3
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1,
+          fontSize: 11
+        }
+      }, sp.label), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontFamily: "IBM Plex Mono",
+          fontSize: 10,
+          color: "var(--moss)"
+        }
+      }, money(sp.income), "/yr"), /*#__PURE__*/React.createElement("button", {
+        style: {
+          fontSize: 9,
+          padding: "1px 5px",
+          border: "1px solid #b9ac8c",
+          borderRadius: 2,
+          cursor: "pointer",
+          background: "transparent",
+          color: "#7a6f5c"
+        },
+        onClick: () => cancelSportsSponsor(sub.key)
+      }, "✕")) : null;
+    })), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline btn-block",
+      style: {
+        fontSize: 11,
+        marginTop: 6
+      },
+      onClick: () => setPendingDecision({
+        type: "sports_sponsor"
+      })
+    }, /*#__PURE__*/React.createElement(Coins, {
+      size: 12
+    }), " Browse Sponsorship Deals"));
+  })() : char.path === "arts" ? (() => {
+    const spec = ARTS[char.specialization];
+    const labelDef = ARTS_LABELS.find(l => l.key === char.artsCareer.label) || ARTS_LABELS[0];
+    const isMusician = char.specialization === "musician";
+    const isPainter = char.specialization === "painter";
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "career-card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "'Fraunces',serif",
+        fontSize: 17,
+        fontWeight: 700
+      }
+    }, spec?.label || "Artist"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#7a6f5c",
+        marginTop: 2
+      }
+    }, labelDef.label, " · ", char.artsCareer.works, " works")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, isMusician && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10,
+        color: "#7a6f5c"
+      }
+    }, ((char.artsCareer.totalStreams || 0) / 1000000).toFixed(1), "M total streams"), isPainter && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10,
+        color: "#7a6f5c"
+      }
+    }, (char.artsCareer.paintings || []).filter(p => !p.sold).length, " unsold works"), char.artsCareer.streakHits > 1 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--gold)"
+      }
+    }, "🔥 ", char.artsCareer.streakHits, "-hit streak"))), /*#__PURE__*/React.createElement("div", {
+      className: "mini-bar-row",
+      style: {
+        marginBottom: 3
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#7a6f5c",
+        width: 36
+      }
+    }, "Fame"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        height: 7,
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${char.artsCareer.fame}%`,
+        background: char.artsCareer.fame >= 70 ? "var(--gold)" : char.artsCareer.fame >= 40 ? "var(--moss)" : "#b9ac8c"
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 11,
+        width: 22,
+        textAlign: "right",
+        fontWeight: 700
+      }
+    }, char.artsCareer.fame)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: char.artsCareer.fame >= 70 ? "var(--gold)" : char.artsCareer.fame >= 40 ? "var(--moss)" : "#7a6f5c",
+        textAlign: "right"
+      }
+    }, char.artsCareer.fame >= 80 ? "Global Icon" : char.artsCareer.fame >= 60 ? "National Star" : char.artsCareer.fame >= 40 ? "Rising Name" : char.artsCareer.fame >= 20 ? "Building Profile" : "Unknown"), char.artsCareer.nextWorkBonus && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--gold)",
+        marginTop: 4
+      }
+    }, "⭐ Next release has a quality bonus")), isMusician && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Music Career"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 5,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        fontSize: 11,
+        padding: "7px 10px"
+      },
+      onClick: () => releaseMusic("single"),
+      disabled: char.cash < 2000
+    }, /*#__PURE__*/React.createElement(Mic2, {
+      size: 12
+    }), " Release Single", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        opacity: .7,
+        marginLeft: 4
+      }
+    }, "₹2,000")), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        fontSize: 11,
+        padding: "7px 10px"
+      },
+      onClick: () => releaseMusic("album"),
+      disabled: char.cash < 20000
+    }, /*#__PURE__*/React.createElement(Sparkles, {
+      size: 12
+    }), " Release Album", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        opacity: .7,
+        marginLeft: 4
+      }
+    }, "₹20,000"))), (char.artsCareer.discography || []).length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Discography"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        maxHeight: 130,
+        overflowY: "auto"
+      }
+    }, [...(char.artsCareer.discography || [])].reverse().map((track, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "4px 6px",
+        borderBottom: "1px solid rgba(0,0,0,.06)",
+        fontSize: 11
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#b9ac8c",
+        width: 8
+      }
+    }, track.type === "album" ? "💿" : "🎵"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        flex: 1,
+        fontWeight: 600
+      }
+    }, track.title), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 9,
+        color: "#7a6f5c"
+      }
+    }, track.peakChart ? "#" + track.peakChart + " ·" : "", ((track.plays || 0) / 1000000).toFixed(1), "M")))))), isPainter && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Studio"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 5,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        fontSize: 11,
+        padding: "7px 10px"
+      },
+      onClick: createPainting
+    }, /*#__PURE__*/React.createElement(Sparkles, {
+      size: 12
+    }), " Create Painting"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline",
+      style: {
+        fontSize: 11,
+        padding: "7px 10px"
+      },
+      onClick: holdGalleryShow,
+      disabled: char.cash < 15000 || (char.artsCareer.paintings || []).filter(p => !p.sold).length === 0
+    }, /*#__PURE__*/React.createElement(Landmark, {
+      size: 12
+    }), " Gallery Show", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        opacity: .7,
+        marginLeft: 4
+      }
+    }, "₹15k"))), (char.artsCareer.paintings || []).length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Portfolio"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        maxHeight: 160,
+        overflowY: "auto"
+      }
+    }, (char.artsCareer.paintings || []).map((p, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 7px",
+        borderBottom: "1px solid rgba(0,0,0,.06)",
+        borderRadius: 2,
+        background: p.sold ? "rgba(0,0,0,.02)" : "transparent",
+        opacity: p.sold ? 0.5 : 1
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        flex: 1,
+        fontWeight: p.sold ? 400 : 600
+      }
+    }, p.title), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10,
+        color: p.sold ? "#7a6f5c" : "var(--moss)"
+      }
+    }, money(p.value)), !p.sold && /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 9,
+        padding: "2px 7px",
+        border: "1px solid var(--moss)",
+        borderRadius: 2,
+        cursor: "pointer",
+        background: "transparent",
+        color: "var(--moss)"
+      },
+      onClick: () => sellPainting(i)
+    }, "Sell"), p.sold && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: "#7a6f5c",
+        fontFamily: "IBM Plex Mono"
+      }
+    }, "SOLD")))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--moss)",
+        fontFamily: "IBM Plex Mono",
+        textAlign: "right",
+        marginTop: 4
+      }
+    }, "Portfolio: ", money((char.artsCareer.paintings || []).filter(p => !p.sold).reduce((s, p) => s + p.value, 0)), " unsold"))), /*#__PURE__*/React.createElement("div", {
+      className: "sec-title",
+      style: {
+        marginTop: 8
+      }
+    }, isMusician || isPainter ? "Other Actions" : "Create & Grow"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 5,
+        marginBottom: 8
+      }
+    }, ARTS_ACTIONS.filter(a => isMusician || isPainter ? a.type !== "release" : true).map(act => /*#__PURE__*/React.createElement("button", {
+      key: act.key,
+      className: "btn btn-outline",
+      title: act.desc,
+      style: {
+        fontSize: 10,
+        padding: "5px 8px",
+        justifyContent: "space-between",
+        opacity: char.cash < (act.cost || 0) ? 0.4 : 1
+      },
+      onClick: () => doArtsAction(act.key),
+      disabled: char.cash < (act.cost || 0)
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement(act.icon, {
+      size: 11
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        maxWidth: 70
+      }
+    }, act.label)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 9,
+        opacity: .7
+      }
+    }, act.cost > 0 ? money(act.cost) : "Free")))), char.artsCareer.milestones.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Milestones"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 4,
+        marginBottom: 8
+      }
+    }, char.artsCareer.milestones.map((m, i) => /*#__PURE__*/React.createElement("span", {
+      key: i,
+      style: {
+        fontSize: 9,
+        fontFamily: "IBM Plex Mono",
+        background: "rgba(201,166,75,.15)",
+        color: "var(--gold)",
+        padding: "2px 6px",
+        borderRadius: 2
+      }
+    }, "🎖 ", m)))), /*#__PURE__*/React.createElement("div", {
+      className: "sec-title"
+    }, "Label / Studio / Gallery"), ARTS_LABELS.map(lbl => {
+      const isActive = lbl.key === char.artsCareer.label;
+      const canSign = char.artsCareer.fame >= lbl.reqFame && !isActive;
+      return /*#__PURE__*/React.createElement("div", {
+        key: lbl.key,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "5px 8px",
+          borderRadius: 3,
+          marginBottom: 3,
+          background: isActive ? "rgba(201,166,75,.10)" : "transparent",
+          border: `1px solid ${isActive ? "var(--gold)" : "transparent"}`
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          fontFamily: "IBM Plex Mono",
+          color: isActive ? "var(--gold)" : "#b9ac8c",
+          width: 14
+        }
+      }, isActive ? "★" : "○"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          fontWeight: isActive ? 700 : 400,
+          color: isActive ? "var(--parchment)" : "#7a6f5c"
+        }
+      }, lbl.label), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 9,
+          color: "#7a6f5c"
+        }
+      }, Math.round(lbl.royaltyRate * 100), "% royalties · ", lbl.advance > 0 ? `₹${(lbl.advance / 1000).toFixed(0)}k advance` : "no advance")), canSign && /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-primary",
+        style: {
+          fontSize: 9,
+          padding: "3px 8px"
+        },
+        onClick: () => signLabel(lbl.key)
+      }, "Sign"), lbl.reqFame > char.artsCareer.fame && !isActive && /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: "var(--rust)",
+          fontFamily: "IBM Plex Mono"
+        }
+      }, "Fame ", lbl.reqFame, "+"));
+    }));
+  })() : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "#7a6f5c",
@@ -6745,89 +8674,229 @@ function OneLifeDossier() {
     className: "tcol"
   }, /*#__PURE__*/React.createElement("div", {
     className: "sec-title"
-  }, "Political Career"), /*#__PURE__*/React.createElement("div", {
-    className: "mini-bar-row",
+  }, "Path to Prime Minister"), POLITICAL_TIERS.map((tier, i) => {
+    const served = char.politics.termsServed[tier.key] || 0;
+    const isCurrent = char.politics.office === tier.key;
+    const prereqMet = !tier.prereq || (char.politics.termsServed[tier.prereq] || 0) >= 1;
+    const repMet = char.stats.reputation >= tier.repReq;
+    const popMet = char.politics.popularity >= tier.popReq;
+    const ageMet = char.age >= 25;
+    const withinLimit = !tier.termLimit || served < tier.termLimit;
+    const allMet = prereqMet && repMet && popMet && ageMet && withinLimit;
+    const bgColor = isCurrent ? "rgba(201,166,75,.14)" : served > 0 ? "rgba(92,122,94,.10)" : "rgba(0,0,0,.04)";
+    const borderColor = isCurrent ? "var(--gold)" : served > 0 ? "var(--moss)" : "#b9ac8c44";
+    return /*#__PURE__*/React.createElement("div", {
+      key: tier.key,
+      style: {
+        marginBottom: 8,
+        padding: "10px 12px",
+        borderRadius: 4,
+        background: bgColor,
+        border: `1.5px solid ${borderColor}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 9,
+        fontWeight: 700,
+        background: isCurrent ? "var(--gold)" : served > 0 ? "var(--moss)" : "#ddd0aa",
+        color: isCurrent || served > 0 ? "white" : "#7a6f5c",
+        flexShrink: 0
+      }
+    }, isCurrent ? "★" : served > 0 ? "✓" : i + 1), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        fontFamily: "'Fraunces', serif",
+        color: isCurrent ? "var(--parchment)" : served > 0 ? "var(--parchment)" : "#b9ac8c"
+      }
+    }, tier.label)), served > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontFamily: "IBM Plex Mono",
+        color: "var(--moss)"
+      }
+    }, served, " term", served > 1 ? "s" : ""), isCurrent && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontFamily: "IBM Plex Mono",
+        color: "var(--gold)"
+      }
+    }, char.politics.termYearsLeft, "yr left")), !isCurrent && served === 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        marginTop: 4
+      }
+    }, tier.prereq && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: prereqMet ? "var(--moss)" : "var(--rust)",
+        fontSize: 11
+      }
+    }, prereqMet ? "✓" : "✗"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#7a6f5c"
+      }
+    }, "Served as ", POLITICAL_TIERS.find(t => t.key === tier.prereq)?.label)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: repMet ? "var(--moss)" : "var(--rust)",
+        fontSize: 11
+      }
+    }, repMet ? "✓" : "✗"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#7a6f5c",
+        flex: 1
+      }
+    }, "Reputation ", tier.repReq, "+"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        width: 60,
+        height: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${Math.min(100, char.stats.reputation / tier.repReq * 100)}%`,
+        background: repMet ? "var(--moss)" : "var(--rust)"
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 9,
+        width: 20,
+        textAlign: "right"
+      }
+    }, char.stats.reputation)), tier.popReq > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: popMet ? "var(--moss)" : "var(--rust)",
+        fontSize: 11
+      }
+    }, popMet ? "✓" : "✗"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#7a6f5c",
+        flex: 1
+      }
+    }, "Popularity ", tier.popReq, "+"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        width: 60,
+        height: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${Math.min(100, char.politics.popularity / (tier.popReq || 1) * 100)}%`,
+        background: popMet ? "var(--moss)" : "var(--gold)"
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 9,
+        width: 20,
+        textAlign: "right"
+      }
+    }, char.politics.popularity))), !isCurrent && !char.politics.office && allMet && withinLimit && char.politics.electionCooldown === 0 && /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        marginTop: 7,
+        fontSize: 11,
+        padding: "5px 10px",
+        width: "100%",
+        justifyContent: "center"
+      },
+      onClick: () => runForOffice(tier.key)
+    }, /*#__PURE__*/React.createElement(Gavel, {
+      size: 11
+    }), " Run for ", tier.label));
+  }), char.politics.electionCooldown > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 6
+      fontSize: 11,
+      color: "var(--rust)",
+      fontStyle: "italic",
+      textAlign: "center",
+      padding: "4px 0"
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, "Election cooldown: ", char.politics.electionCooldown, " year", char.politics.electionCooldown > 1 ? "s" : ""), /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
     style: {
-      fontSize: 10,
-      color: "#7a6f5c",
-      width: 62
+      marginTop: 12
     }
-  }, "Popularity"), /*#__PURE__*/React.createElement("div", {
-    className: "bar-track",
-    style: {
-      height: 5,
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bar-fill",
-    style: {
-      width: `${char.politics.popularity}%`,
-      background: "var(--gold)"
-    }
-  })), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      fontFamily: "IBM Plex Mono",
-      width: 22,
-      textAlign: "right"
-    }
-  }, char.politics.popularity)), char.politics.office && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "mini-bar-row",
-    style: {
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: "#7a6f5c",
-      width: 62
-    }
-  }, "Approval"), /*#__PURE__*/React.createElement("div", {
-    className: "bar-track",
-    style: {
-      height: 5,
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bar-fill",
-    style: {
-      width: `${char.politics.approval}%`,
-      background: char.politics.approval < 30 ? "var(--rust)" : "var(--moss)"
-    }
-  })), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      fontFamily: "IBM Plex Mono",
-      width: 22,
-      textAlign: "right"
-    }
-  }, char.politics.approval)), /*#__PURE__*/React.createElement("div", {
-    className: "irow"
-  }, /*#__PURE__*/React.createElement("span", null, "Office"), /*#__PURE__*/React.createElement("span", null, POLITICAL_TIERS.find(t => t.key === char.politics.office)?.label, char.party.affiliation ? ` (${POLITICAL_PARTIES[char.party.affiliation].short})` : " (Ind.)")), /*#__PURE__*/React.createElement("div", {
-    className: "irow"
-  }, /*#__PURE__*/React.createElement("span", null, "Term left"), /*#__PURE__*/React.createElement("span", null, char.politics.termYearsLeft, " yr"))), char.party.affiliation && (() => {
+  }, "Party Path to PM"), char.party.affiliation ? (() => {
     const party = POLITICAL_PARTIES[char.party.affiliation];
+    const rankIdx = char.party.rankIdx;
+    const steps = [{
+      label: "Backbencher",
+      check: true
+    }, {
+      label: "Member of Parliament",
+      check: rankIdx >= 1,
+      hint: "Win an election with party backing"
+    }, {
+      label: "Cabinet Minister",
+      check: rankIdx >= 2,
+      hint: `Standing 60+ (yours: ${char.party.standing})`
+    }, {
+      label: "Party President (PM Candidate)",
+      check: rankIdx >= 3,
+      hint: `Challenge leadership (needs Cab. Minister + standing 50+ + popularity 55+)`
+    }];
     return /*#__PURE__*/React.createElement("div", {
       style: {
-        margin: "8px 0",
-        padding: "8px 10px",
-        background: "rgba(0,0,0,0.05)",
+        padding: "10px 12px",
+        background: "rgba(0,0,0,.05)",
         borderLeft: `3px solid ${party.color}`,
-        borderRadius: 2
+        borderRadius: 3
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
-        fontWeight: 600
+        fontWeight: 700,
+        marginBottom: 6
       }
-    }, party.short, " · ", PARTY_RANKS[char.party.rankIdx]), /*#__PURE__*/React.createElement("div", {
+    }, party.short, " — ", party.label), /*#__PURE__*/React.createElement("div", {
       className: "mini-bar-row",
       style: {
-        marginTop: 4
+        marginBottom: 8
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -6854,15 +8923,103 @@ function OneLifeDossier() {
         width: 22,
         textAlign: "right"
       }
-    }, char.party.standing)));
-  })(), /*#__PURE__*/React.createElement("div", {
+    }, char.party.standing)), steps.map((step, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 6,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: step.check ? "var(--moss)" : "#b9ac8c",
+        flexShrink: 0,
+        marginTop: 1
+      }
+    }, step.check ? "✓" : "○"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: step.check ? 700 : 400,
+        color: step.check ? "var(--parchment)" : "#7a6f5c"
+      }
+    }, step.label), !step.check && step.hint && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#9a8c7c",
+        marginTop: 1
+      }
+    }, step.hint)), i === rankIdx && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: party.color,
+        fontFamily: "IBM Plex Mono",
+        marginLeft: "auto",
+        marginTop: 2
+      }
+    }, "← YOU"))), char.party.rankIdx >= 2 && char.party.rankIdx < 3 && char.party.standing >= 50 && char.politics.popularity >= 55 && char.party.leadershipChallengeCooldown === 0 && /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary btn-block",
+      style: {
+        marginTop: 8,
+        fontSize: 11
+      },
+      onClick: challengeForLeadership
+    }, /*#__PURE__*/React.createElement(Gavel, {
+      size: 11
+    }), " Challenge for ", party.short, " Leadership"));
+  })() : /*#__PURE__*/React.createElement("div", {
     style: {
+      fontSize: 11,
+      color: "#7a6f5c",
+      lineHeight: 1.6,
+      padding: "8px 10px",
+      background: "rgba(0,0,0,.04)",
+      borderRadius: 3
+    }
+  }, "No party affiliation. Hold office with popularity 40+ and a party will approach you. You can also run as an independent — but reaching Governor or PM without a party is very hard."), char.politics.office && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
       display: "flex",
       flexDirection: "column",
-      gap: 5,
-      marginTop: 6
+      gap: 5
     }
-  }, char.politics.office ? /*#__PURE__*/React.createElement(React.Fragment, null, !char.politics.lawProposedThisTerm && /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mini-bar-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: "#7a6f5c",
+      width: 54
+    }
+  }, "Approval"), /*#__PURE__*/React.createElement("div", {
+    className: "bar-track",
+    style: {
+      height: 5,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bar-fill",
+    style: {
+      width: `${char.politics.approval}%`,
+      background: char.politics.approval < 30 ? "var(--rust)" : "var(--moss)"
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontFamily: "IBM Plex Mono",
+      width: 22,
+      textAlign: "right"
+    }
+  }, char.politics.approval)), char.politics.campaignPledge && !char.politics.lawProposedThisTerm && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--gold)",
+      background: "rgba(201,166,75,.12)",
+      padding: "4px 8px",
+      borderRadius: 2
+    }
+  }, "⚠ Campaign pledge: must propose ", LAWS.find(l => l.key === char.politics.campaignPledge)?.label), !char.politics.lawProposedThisTerm && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 11,
@@ -6870,60 +9027,15 @@ function OneLifeDossier() {
     },
     onClick: () => setPendingDecision("law")
   }, /*#__PURE__*/React.createElement(Landmark, {
-    size: 12
-  }), " Propose a Law"), char.party.affiliation && char.party.rankIdx >= 2 && char.party.rankIdx < 3 && char.party.standing >= 50 && char.politics.popularity >= 55 && char.party.leadershipChallengeCooldown === 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 11,
-      padding: "6px 10px"
-    },
-    onClick: challengeForLeadership
-  }, /*#__PURE__*/React.createElement(Gavel, {
-    size: 12
-  }), " Challenge for ", POLITICAL_PARTIES[char.party.affiliation].short, " Leadership")) : eligibleTiers(char).length > 0 ? eligibleTiers(char).map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.key,
-    className: "btn btn-outline",
-    style: {
-      fontSize: 11,
-      padding: "6px 10px"
-    },
-    onClick: () => runForOffice(t.key)
-  }, /*#__PURE__*/React.createElement(Gavel, {
-    size: 12
-  }), " Run for ", t.label)) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#7a6f5c",
-      fontStyle: "italic"
-    }
-  }, char.politics.electionCooldown > 0 ? `Cooldown: ${char.politics.electionCooldown} yr` : "Build reputation & popularity to enter politics (age 25+)."), char.politics.office && char.politics.termYearsLeft <= 0 && !char.politics.lawProposedThisTerm && /*#__PURE__*/React.createElement("button", {
+    size: 11
+  }), " Propose a Law"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 11,
       padding: "6px 10px"
     },
     onClick: retireFromOffice
-  }, "Retire from Office")), /*#__PURE__*/React.createElement("div", {
-    className: "sec-title",
-    style: {
-      marginTop: 10
-    }
-  }, "Terms Served"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 4
-    }
-  }, Object.entries(char.politics.termsServed).map(([k, v]) => v > 0 && /*#__PURE__*/React.createElement("div", {
-    key: k,
-    style: {
-      fontSize: 10,
-      fontFamily: "IBM Plex Mono",
-      padding: "3px 6px",
-      background: "rgba(0,0,0,0.04)",
-      borderRadius: 2
-    }
-  }, POLITICAL_TIERS.find(t => t.key === k)?.label, ": ", /*#__PURE__*/React.createElement("strong", null, v))))), /*#__PURE__*/React.createElement("div", {
+  }, "Retire from Office"))), /*#__PURE__*/React.createElement("div", {
     className: "tcol"
   }, /*#__PURE__*/React.createElement("div", {
     className: "sec-title",
@@ -7660,21 +9772,62 @@ function OneLifeDossier() {
       className: "option-card",
       onClick: () => resolveBigEvent(pendingDecision.eventKey, i)
     }, /*#__PURE__*/React.createElement("h5", null, opt.label), /*#__PURE__*/React.createElement("p", null, opt.desc))))));
-  })(), pendingDecision === "trait" && /*#__PURE__*/React.createElement("div", {
+  })(), pendingDecision?.type === "label_offer" && /*#__PURE__*/React.createElement("div", {
     className: "overlay"
   }, /*#__PURE__*/React.createElement("div", {
     className: "decision-card"
+  }, /*#__PURE__*/React.createElement("h3", null, "A Label Came Calling"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "You've been discovered"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#655c4c",
+      lineHeight: 1.6,
+      margin: "8px 0"
+    }
+  }, "Your streaming numbers caught someone's attention. They want to sign you. Moving up from Independent means giving away royalties in exchange for massive reach and an advance."), /*#__PURE__*/React.createElement("div", {
+    className: "option-grid",
+    style: {
+      gridTemplateColumns: "1fr"
+    }
+  }, ARTS_LABELS.filter(l => l.key !== "indie" && l.reqFame <= char.artsCareer.fame + 5).slice(-2).map(lbl => /*#__PURE__*/React.createElement("div", {
+    key: lbl.key,
+    className: "option-card",
+    onClick: () => signLabel(lbl.key)
+  }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(Mic2, {
+    size: 15
+  }), " ", lbl.label), /*#__PURE__*/React.createElement("p", null, lbl.desc), /*#__PURE__*/React.createElement("span", {
+    className: "req"
+  }, Math.round(lbl.royaltyRate * 100), "% royalties · ", lbl.advance > 0 ? `${money(lbl.advance)} advance` : "no advance", " · ", lbl.fameMult, "× fame multiplier"))), /*#__PURE__*/React.createElement("div", {
+    className: "option-card",
+    onClick: () => setPendingDecision(null)
+  }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(Sparkles, {
+    size: 15
+  }), " Stay Independent"), /*#__PURE__*/React.createElement("p", null, "85% royalties, full control. Build slower, keep everything."))))), pendingDecision === "trait" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 680
+    }
   }, /*#__PURE__*/React.createElement("h3", null, "Who are you becoming?"), /*#__PURE__*/React.createElement("div", {
     className: "sub"
-  }, "Age 5 · Choose a defining trait"), /*#__PURE__*/React.createElement("div", {
-    className: "option-grid"
+  }, "Age 5 · Choose a defining trait — it shapes everything"), /*#__PURE__*/React.createElement("div", {
+    className: "option-grid",
+    style: {
+      gridTemplateColumns: "1fr 1fr 1fr"
+    }
   }, Object.values(TRAITS).map(t => /*#__PURE__*/React.createElement("div", {
     key: t.key,
     className: "option-card",
     onClick: () => resolveTraitChoice(t.key)
   }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(t.icon, {
-    size: 16
-  }), " ", t.label), /*#__PURE__*/React.createElement("p", null, t.desc)))))), pendingDecision === "path" && /*#__PURE__*/React.createElement("div", {
+    size: 15
+  }), " ", t.label), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11
+    }
+  }, t.desc)))))), pendingDecision === "path" && /*#__PURE__*/React.createElement("div", {
     className: "overlay"
   }, /*#__PURE__*/React.createElement("div", {
     className: "decision-card"
@@ -7866,51 +10019,289 @@ function OneLifeDossier() {
       },
       onClick: declineOffer
     }, "Decline"))));
-  })(), pendingDecision?.type === "election" && (() => {
-    const tier = POLITICAL_TIERS.find(t => t.key === pendingDecision.tierKey);
+  })(), pendingDecision?.type === "campaign_action" && char.campaign?.active && (() => {
+    const tier = POLITICAL_TIERS.find(t => t.key === char.campaign.tierKey);
+    const rival = char.campaign.rival;
+    const actionsLeft = char.campaign.actionsLeft || 0;
+    const myPop = char.politics.popularity;
+    const rivalPop = Math.max(10, (rival?.pop || 50) - Math.round((char.campaign.rivalDebuff || 0) * 100));
+    return /*#__PURE__*/React.createElement("div", {
+      className: "overlay"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "decision-card",
+      style: {
+        maxWidth: 680
+      }
+    }, /*#__PURE__*/React.createElement("h3", null, "On the Campaign Trail"), /*#__PURE__*/React.createElement("div", {
+      className: "sub"
+    }, tier?.label, " · ", actionsLeft, " action", actionsLeft !== 1 ? "s" : "", " remaining"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "rgba(0,0,0,.06)",
+        borderRadius: 4,
+        padding: "10px 14px",
+        margin: "12px 0",
+        display: "flex",
+        gap: 16,
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "#7a6f5c",
+        marginBottom: 3
+      }
+    }, "Your polling"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        height: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${Math.min(100, myPop)}%`,
+        background: "var(--gold)"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontFamily: "IBM Plex Mono",
+        fontWeight: 700,
+        color: "var(--gold)",
+        marginTop: 2
+      }
+    }, myPop)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#7a6f5c",
+        fontWeight: 700
+      }
+    }, "vs"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "#7a6f5c",
+        marginBottom: 3
+      }
+    }, rival?.name || "Rival", " (", rival?.party ? POLITICAL_PARTIES[rival.party]?.short : "Ind.", ")"), /*#__PURE__*/React.createElement("div", {
+      className: "bar-track",
+      style: {
+        height: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "bar-fill",
+      style: {
+        width: `${Math.min(100, rivalPop)}%`,
+        background: "var(--rust)"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontFamily: "IBM Plex Mono",
+        fontWeight: 700,
+        color: "var(--rust)",
+        marginTop: 2
+      }
+    }, rivalPop))), /*#__PURE__*/React.createElement("div", {
+      className: "option-grid"
+    }, CAMPAIGN_ACTIONS.filter(a => !a.requiresLawChoice).map(act => /*#__PURE__*/React.createElement("div", {
+      key: act.key,
+      className: "option-card",
+      onClick: () => takeCampaignAction(act.key, null),
+      style: {
+        opacity: char.cash < (act.cost || 0) ? 0.45 : 1
+      }
+    }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(act.icon, {
+      size: 15
+    }), " ", act.label), /*#__PURE__*/React.createElement("p", null, act.desc), act.cost > 0 && /*#__PURE__*/React.createElement("span", {
+      className: "req"
+    }, "Cost: ", money(act.cost)), act.rivalDebuff && /*#__PURE__*/React.createElement("span", {
+      className: "req",
+      style: {
+        color: "var(--rust)"
+      }
+    }, "Rival −", Math.round(act.rivalDebuff * 100), " polling"))), /*#__PURE__*/React.createElement("div", {
+      className: "option-card",
+      onClick: () => setPendingDecision({
+        type: "campaign_promise"
+      })
+    }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(Landmark, {
+      size: 15
+    }), " Make a Campaign Promise"), /*#__PURE__*/React.createElement("p", null, "Pledge a specific policy. Big boost — but you must propose it next term."), /*#__PURE__*/React.createElement("span", {
+      className: "req"
+    }, "Choose a law →"))), char.campaign.isReelection && actionsLeft === (char.campaign.actionsLeft || 3) && /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline btn-block",
+      style: {
+        marginTop: 10
+      },
+      onClick: retireFromOffice
+    }, "Retire Instead of Campaigning")));
+  })(), pendingDecision?.type === "campaign_promise" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card"
+  }, /*#__PURE__*/React.createElement("h3", null, "Your Campaign Promise"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "You will be bound to propose this law next term"), /*#__PURE__*/React.createElement("div", {
+    className: "option-grid"
+  }, LAWS.map(law => /*#__PURE__*/React.createElement("div", {
+    key: law.key,
+    className: "option-card",
+    onClick: () => takeCampaignAction("promise", law.key)
+  }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(law.icon, {
+    size: 15
+  }), " ", law.label), /*#__PURE__*/React.createElement("p", null, law.desc)))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      marginTop: 10
+    },
+    onClick: () => setPendingDecision({
+      type: "campaign_action"
+    })
+  }, "Back"))), pendingDecision?.type === "election_day" && (() => {
+    const tier = POLITICAL_TIERS.find(t => t.key === char.campaign?.tierKey);
+    const rival = char.campaign?.rival;
+    const myPop = char.politics.popularity;
+    const rivalPop = Math.max(10, (rival?.pop || 50) - Math.round((char.campaign?.rivalDebuff || 0) * 100));
+    const party = char.party.affiliation ? POLITICAL_PARTIES[char.party.affiliation] : null;
+    const estChance = Math.round(Math.max(5, Math.min(92, (0.20 + (char.stats.reputation - (tier?.repReq || 0)) / 180 + (myPop - (tier?.popReq || 0)) / 200 + char.stats.smarts / 500 + (char.campaign?.bonusChance || 0) + (party ? 0.08 + char.party.standing / 400 : 0)) * 100)));
+    return /*#__PURE__*/React.createElement("div", {
+      className: "overlay"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "decision-card",
+      style: {
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("h3", null, "Election Day"), /*#__PURE__*/React.createElement("div", {
+      className: "sub"
+    }, tier?.label, " · The votes are being counted"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        margin: "16px 0",
+        padding: "14px",
+        background: "rgba(0,0,0,.06)",
+        borderRadius: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "#7a6f5c",
+        marginBottom: 8
+      }
+    }, "Final head-to-head"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 20,
+        justifyContent: "center",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 28,
+        fontFamily: "'Fraunces',serif",
+        fontWeight: 700,
+        color: "var(--gold)"
+      }
+    }, myPop), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#7a6f5c"
+      }
+    }, "You", party ? ` (${party.short})` : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        color: "#b9ac8c"
+      }
+    }, "vs"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 28,
+        fontFamily: "'Fraunces',serif",
+        fontWeight: 700,
+        color: "var(--rust)"
+      }
+    }, rivalPop), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#7a6f5c"
+      }
+    }, rival?.name))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 10,
+        fontSize: 11,
+        color: "var(--gold)"
+      }
+    }, "Estimated win chance: ", estChance, "%")), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary btn-block",
+      style: {
+        fontSize: 14,
+        padding: "12px"
+      },
+      onClick: resolveElectionDay
+    }, "Count the Votes ", /*#__PURE__*/React.createElement(ChevronRight, {
+      size: 16
+    }))));
+  })(), pendingDecision?.type === "coalition" && (() => {
+    const partner = POLITICAL_PARTIES[pendingDecision.partner?.key || pendingDecision.partner];
+    const myParty = char.party.affiliation ? POLITICAL_PARTIES[char.party.affiliation] : null;
+    const demanded = LAWS[Math.floor(Math.random() * LAWS.length)];
     return /*#__PURE__*/React.createElement("div", {
       className: "overlay"
     }, /*#__PURE__*/React.createElement("div", {
       className: "decision-card"
-    }, /*#__PURE__*/React.createElement("h3", null, pendingDecision.reelection ? "Seeking re-election" : "On the campaign trail"), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("h3", null, "No Clear Majority"), /*#__PURE__*/React.createElement("div", {
       className: "sub"
-    }, tier.label, " · Reputation req. ", tier.repReq, "+"), /*#__PURE__*/React.createElement("p", {
+    }, "Coalition negotiations"), /*#__PURE__*/React.createElement("p", {
       style: {
         fontSize: 13,
         color: "#655c4c",
-        lineHeight: 1.5,
-        marginTop: 0
+        lineHeight: 1.6,
+        margin: "10px 0"
       }
-    }, "Spend cash on the campaign to improve your odds. You have ", money(char.cash), " on hand."), /*#__PURE__*/React.createElement("div", {
-      className: "invest-row",
+    }, myParty?.short, " fell short of a majority. ", partner?.label, " holds the balance of power. They'll back you as Prime Minister — in exchange for a seat at the table."), /*#__PURE__*/React.createElement("div", {
       style: {
-        marginTop: 10
+        padding: "10px 12px",
+        background: "rgba(0,0,0,.06)",
+        borderRadius: 4,
+        marginBottom: 12,
+        borderLeft: `3px solid ${partner?.color}`
       }
     }, /*#__PURE__*/React.createElement("div", {
-      className: "invest-label"
-    }, /*#__PURE__*/React.createElement(Wallet, {
-      size: 13
-    }), " Spend"), /*#__PURE__*/React.createElement("input", {
-      type: "number",
-      min: "0",
-      placeholder: "₹",
-      value: campaignSpend,
-      onChange: e => setCampaignSpend(e.target.value)
-    }), /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        marginBottom: 4
+      }
+    }, partner?.short, " demands:"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "#655c4c"
+      }
+    }, "One Cabinet post + support for ", demanded?.label, " in the first term.")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-primary",
       style: {
-        marginLeft: "auto"
+        flex: 1,
+        justifyContent: "center"
       },
-      onClick: launchCampaign
-    }, "Launch Campaign ", /*#__PURE__*/React.createElement(ChevronRight, {
-      size: 14
-    }))), pendingDecision.reelection && /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-outline btn-block",
+      onClick: () => resolveCoalition(true, pendingDecision.partner?.key || pendingDecision.partner)
+    }, "Accept Coalition"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline",
       style: {
-        marginTop: 12
+        flex: 1,
+        justifyContent: "center"
       },
-      onClick: retireFromOffice
-    }, "Retire Instead")));
+      onClick: () => resolveCoalition(false, pendingDecision.partner?.key || pendingDecision.partner)
+    }, "Reject — New Elections"))));
   })(), pendingDecision === "law" && /*#__PURE__*/React.createElement("div", {
     className: "overlay"
   }, /*#__PURE__*/React.createElement("div", {
@@ -8249,7 +10640,224 @@ function OneLifeDossier() {
       justifyContent: "center"
     },
     onClick: () => setPendingDecision(null)
-  }, "Stay In")))), pendingDecision?.type === "asset_catalog" && /*#__PURE__*/React.createElement("div", {
+  }, "Stay In")))), pendingDecision?.type === "sports_sponsor" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 600
+    }
+  }, /*#__PURE__*/React.createElement("h3", null, "Sponsorship Deals"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "Career Rating ", char.sportsCareer.rating, " · unlocks more at higher ratings"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      marginTop: 12
+    }
+  }, SPORTS_SPONSORS.map(sp => {
+    const isActive = char.sportsCareer.sponsorships.find(s => s.key === sp.key);
+    const canSign = char.sportsCareer.rating >= sp.reqRating && !isActive;
+    const locked = char.sportsCareer.rating < sp.reqRating;
+    return /*#__PURE__*/React.createElement("div", {
+      key: sp.key,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 14px",
+        borderRadius: 4,
+        border: `1.5px solid ${isActive ? "var(--gold)" : locked ? "#ddd0aa44" : "#b9ac8c"}`,
+        background: isActive ? "rgba(201,166,75,.08)" : "#fff",
+        opacity: locked ? 0.4 : 1
+      }
+    }, /*#__PURE__*/React.createElement(sp.icon, {
+      size: 18,
+      style: {
+        color: isActive ? "var(--gold)" : "var(--ink)",
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: "var(--ink)"
+      }
+    }, sp.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 10,
+        marginTop: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--moss)"
+      }
+    }, money(sp.income), "/yr"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--rust)"
+      }
+    }, "+", sp.rep, " reputation"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#7a6f5c"
+      }
+    }, "Req. rating ", sp.reqRating))), isActive ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--gold)",
+        fontFamily: "IBM Plex Mono"
+      }
+    }, "✓ SIGNED") : canSign ? /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        fontSize: 11,
+        padding: "5px 12px"
+      },
+      onClick: () => signSportsSponsor(sp.key)
+    }, "Sign") : /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--rust)",
+        fontFamily: "IBM Plex Mono"
+      }
+    }, "Rating ", sp.reqRating, "+"));
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      marginTop: 12
+    },
+    onClick: () => setPendingDecision(null)
+  }, "Done"))), pendingDecision?.type === "agency_catalog" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 660
+    }
+  }, /*#__PURE__*/React.createElement("h3", null, "Hire a PR Agency"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "Annual retainer · passive reputation & popularity every year"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      marginTop: 12
+    }
+  }, AGENCIES.map(ag => {
+    const isActive = (char.lifestyle.agencies || []).find(a => a.key === ag.key);
+    const canAfford = char.cash >= ag.costPerYear;
+    return /*#__PURE__*/React.createElement("div", {
+      key: ag.key,
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12,
+        padding: "12px 14px",
+        borderRadius: 4,
+        border: `1.5px solid ${isActive ? "var(--moss)" : "#b9ac8c"}`,
+        background: isActive ? "rgba(92,122,94,.08)" : "#fff",
+        opacity: !isActive && !canAfford ? 0.45 : 1
+      }
+    }, /*#__PURE__*/React.createElement(ag.icon, {
+      size: 20,
+      style: {
+        color: isActive ? "var(--moss)" : "var(--ink)",
+        flexShrink: 0,
+        marginTop: 2
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: "var(--ink)",
+        fontFamily: "'Fraunces',serif"
+      }
+    }, ag.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#655c4c",
+        lineHeight: 1.5,
+        margin: "3px 0"
+      }
+    }, ag.desc), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 10,
+        flexWrap: "wrap",
+        marginTop: 4
+      }
+    }, ag.repPerYear > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--rust)"
+      }
+    }, "Rep +", ag.repPerYear, "/yr"), ag.popPerYear > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--gold)"
+      }
+    }, "Pop +", ag.popPerYear, "/yr"), ag.approvalBonus && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--moss)"
+      }
+    }, "Approval +", ag.approvalBonus, "/yr"), ag.crisisShield && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#9a5c8c"
+      }
+    }, "Scandal damage −", Math.round(ag.crisisShield * 100), "%"), ag.pathBonus && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--moss)"
+      }
+    }, "+", ag.pathBonusExtra?.popPerYear, " pop for ", ag.pathBonus.join("/"), " careers"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right",
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 12,
+        fontWeight: 700,
+        color: "var(--ink)"
+      }
+    }, money(ag.costPerYear), "/yr"), isActive ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--moss)",
+        fontFamily: "IBM Plex Mono"
+      }
+    }, "✓ ACTIVE") : /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        marginTop: 4,
+        fontSize: 10,
+        padding: "4px 12px"
+      },
+      onClick: () => subscribeAgency(ag.key),
+      disabled: !canAfford
+    }, "Hire")));
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      marginTop: 12
+    },
+    onClick: () => setPendingDecision(null)
+  }, "Done"))), pendingDecision?.type === "asset_catalog" && /*#__PURE__*/React.createElement("div", {
     className: "overlay"
   }, /*#__PURE__*/React.createElement("div", {
     className: "decision-card",
@@ -8781,6 +11389,7 @@ function OneLifeDossier() {
     }), " Start Fresh")));
   })());
 }
+
 
 const domRoot = ReactDOM.createRoot(document.getElementById('root'));
 domRoot.render(React.createElement(OneLifeDossier));
