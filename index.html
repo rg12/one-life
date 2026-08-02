@@ -364,6 +364,226 @@ const _SONG2 = ["Again", "Away", "Tonight", "Forever", "Inside", "Higher", "Deep
 const genPaintingTitle = () => `${pick(_ADJ)} ${pick(_NOUN)}`;
 const genSongTitle = () => `${pick(_SONG1)} ${pick(_SONG2)}`;
 const genAlbumTitle = () => `${pick(_ADJ)} ${pick(_SONG2)}`;
+
+/* ---------------------------------------------------------------- */
+/* EARLY LIFE SYSTEM                                                 */
+/* ---------------------------------------------------------------- */
+
+const CHILDHOOD_ACTIVITIES = [{
+  key: "sports_team",
+  label: "Join the Sports Team",
+  icon: Trophy,
+  health: 4,
+  happiness: 5,
+  smarts: -1,
+  sportsBoost: 6,
+  desc: "After-school sport. You learn to compete, lose, and get back up."
+}, {
+  key: "art_music",
+  label: "Art & Music Lessons",
+  icon: Mic2,
+  smarts: 2,
+  happiness: 6,
+  artsBoost: 4,
+  desc: "Weekend lessons. A creative seed is planted. It'll grow."
+}, {
+  key: "study_extra",
+  label: "Study Ahead of Class",
+  icon: Brain,
+  smarts: 7,
+  happiness: -2,
+  desc: "Top of the class. Teachers notice. Parents beam."
+}, {
+  key: "make_friends",
+  label: "Build Friendships",
+  icon: Heart,
+  happiness: 8,
+  reputation: 3,
+  desc: "A normal, happy childhood. This matters more than people think."
+}, {
+  key: "pick_hobby",
+  label: "Pick Up a Hobby",
+  icon: Sparkles,
+  happiness: 5,
+  smarts: 2,
+  artsBoost: 2,
+  desc: "Drawing, coding, cooking — something you call yours."
+}];
+const TEEN_CHOICES = [{
+  key: "study_hard",
+  label: "Study Hard",
+  icon: Brain,
+  smarts: 6,
+  happiness: -2,
+  desc: "Top of the class. Opens better colleges and scholarships."
+}, {
+  key: "school_band",
+  label: "School Band / Art Club",
+  icon: Mic2,
+  smarts: 1,
+  happiness: 6,
+  artsBoost: 6,
+  desc: "After-school creative activities. Your future art self thanks you."
+}, {
+  key: "varsity_sport",
+  label: "Varsity Sports",
+  icon: Trophy,
+  health: 5,
+  happiness: 4,
+  smarts: -1,
+  sportsBoost: 8,
+  desc: "The athlete of the school. Scouts notice. You're already on a path."
+}, {
+  key: "social_media",
+  label: "Start Social Media Channel",
+  icon: TrendingUp,
+  reputation: 3,
+  happiness: 4,
+  socialMedia: true,
+  desc: "Start posting content. Build an audience before the world knows you."
+}, {
+  key: "part_time_job",
+  label: "Part-Time Job",
+  icon: Coins,
+  cashEarn: 600,
+  smarts: 1,
+  happiness: -1,
+  desc: "Evenings at the shop. You learn the value of money early."
+}, {
+  key: "be_social",
+  label: "Be Social & Have Fun",
+  icon: Heart,
+  happiness: 8,
+  reputation: 4,
+  smarts: -1,
+  desc: "These are the years. You will remember them."
+}, {
+  key: "rebel",
+  label: "Skip Classes & Rebel",
+  icon: Skull,
+  happiness: 6,
+  reputation: 4,
+  smarts: -4,
+  underworldChance: 0.12,
+  desc: "Living on the edge. Interesting people find you. Not all of them good."
+}, {
+  key: "private_tutor",
+  label: "Private Tutoring",
+  icon: Brain,
+  cost: 2000,
+  smarts: 10,
+  happiness: -2,
+  desc: "The best tutors money can buy. Smarts jump. Your essays are flawless."
+}];
+const COLLEGE_DEGREES = [{
+  key: "business",
+  label: "Business Administration",
+  years: 3,
+  costPerYear: 2000,
+  grad: true,
+  industryHead: "finance",
+  bonus: {
+    smarts: 8
+  },
+  desc: "Versatile. Finance and business careers start a rung higher."
+}, {
+  key: "law",
+  label: "Law (LLB)",
+  years: 5,
+  costPerYear: 2800,
+  grad: true,
+  industryHead: "law",
+  bonus: {
+    smarts: 10,
+    reputation: 5
+  },
+  desc: "Long path, huge payoff. The law career unlocked at graduation."
+}, {
+  key: "medicine",
+  label: "Medicine (MBBS)",
+  years: 6,
+  costPerYear: 3500,
+  grad: true,
+  industryHead: "medicine",
+  bonus: {
+    smarts: 10,
+    health: 4
+  },
+  desc: "The longest, most respected path. Worth every year."
+}, {
+  key: "engineering",
+  label: "Computer Science / Engineering",
+  years: 4,
+  costPerYear: 2200,
+  grad: true,
+  industryHead: "tech",
+  bonus: {
+    smarts: 9
+  },
+  desc: "Tech careers start at Senior Engineer rung. Startups love you."
+}, {
+  key: "arts_design",
+  label: "Fine Arts / Music / Design",
+  years: 3,
+  costPerYear: 1500,
+  grad: true,
+  industryHead: null,
+  bonus: {
+    smarts: 3,
+    happiness: 7
+  },
+  artsBoost: 12,
+  desc: "Arts career starts with credibility. Fame grows faster from day one."
+}, {
+  key: "pol_science",
+  label: "Political Science",
+  years: 3,
+  costPerYear: 1800,
+  grad: true,
+  industryHead: "government",
+  bonus: {
+    smarts: 6,
+    reputation: 5
+  },
+  politicsBoost: true,
+  desc: "Government career natural fit. Politics easier to enter."
+}, {
+  key: "journalism",
+  label: "Journalism / Media",
+  years: 3,
+  costPerYear: 1500,
+  grad: true,
+  industryHead: "media",
+  bonus: {
+    smarts: 5,
+    reputation: 6
+  },
+  desc: "Media career starts at Journalist, not Production Assistant."
+}, {
+  key: "economics",
+  label: "Economics / Finance",
+  years: 3,
+  costPerYear: 2000,
+  grad: true,
+  industryHead: "finance",
+  bonus: {
+    smarts: 8,
+    reputation: 2
+  },
+  desc: "Finance and investing doors open wider."
+}, {
+  key: "sports_sci",
+  label: "Sports Science / PE",
+  years: 3,
+  costPerYear: 1500,
+  grad: true,
+  industryHead: null,
+  bonus: {
+    health: 8
+  },
+  sportsBoost: 15,
+  desc: "Sports career starts with higher base rating. Coaches are better."
+}];
 const POLITICAL_TIERS = [{
   key: "council",
   label: "Local Council",
@@ -989,6 +1209,159 @@ const PRESTIGE_ACHIEVEMENTS = [{
   cash: 8000,
   desc: "The Nobel Committee awarded you the Peace Prize.",
   peacePolicyReq: true
+}];
+
+/* ---------------------------------------------------------------- */
+/* NAMED STOCKS + MACRO WORLD EVENTS                                */
+/* ---------------------------------------------------------------- */
+
+const NAMED_STOCKS = [{
+  key: "alphagoo",
+  label: "Alphagoo",
+  sector: "tech",
+  vol: 0.35
+}, {
+  key: "infovision",
+  label: "InfoVision IT",
+  sector: "tech",
+  vol: 0.28
+}, {
+  key: "pbmc",
+  label: "PBMC Bank",
+  sector: "finance",
+  vol: 0.22
+}, {
+  key: "stellarfin",
+  label: "Stellar Finance",
+  sector: "finance",
+  vol: 0.25
+}, {
+  key: "pharmagen",
+  label: "PharmaGen Ltd",
+  sector: "pharma",
+  vol: 0.30
+}, {
+  key: "healthfirst",
+  label: "HealthFirst",
+  sector: "pharma",
+  vol: 0.28
+}, {
+  key: "realtyrise",
+  label: "RealtyRise",
+  sector: "realestate",
+  vol: 0.18
+}, {
+  key: "urbandev",
+  label: "Urban Developers",
+  sector: "realestate",
+  vol: 0.20
+}, {
+  key: "energex",
+  label: "EnerGex Corp",
+  sector: "energy",
+  vol: 0.25
+}, {
+  key: "mediavault",
+  label: "MediaVault",
+  sector: "media",
+  vol: 0.32
+}];
+const MACRO_EVENTS = [{
+  key: "tech_boom",
+  label: "Tech Sector Boom",
+  sector: "tech",
+  effect: 0.38,
+  prob: 0.07,
+  cashEffect: 0,
+  desc: "AI breakthroughs and new funding rounds sent tech stocks surging."
+}, {
+  key: "tech_crash",
+  label: "Tech Bubble Burst",
+  sector: "tech",
+  effect: -0.35,
+  prob: 0.05,
+  cashEffect: 0,
+  desc: "Overvalued tech stocks corrected hard after a major failure."
+}, {
+  key: "recession",
+  label: "Economic Recession",
+  sector: null,
+  effect: -0.22,
+  prob: 0.06,
+  cashEffect: -3000,
+  desc: "GDP contracted for three quarters. Markets in broad retreat. Incomes squeezed."
+}, {
+  key: "boom",
+  label: "Economic Boom",
+  sector: null,
+  effect: 0.18,
+  prob: 0.07,
+  cashEffect: 2000,
+  desc: "Strong growth, low unemployment, consumer confidence at highs."
+}, {
+  key: "pharma_break",
+  label: "Pharma Breakthrough",
+  sector: "pharma",
+  effect: 0.45,
+  prob: 0.06,
+  cashEffect: 0,
+  desc: "A landmark drug approval sent pharma stocks to record highs."
+}, {
+  key: "property_boom",
+  label: "Real Estate Super-Cycle",
+  sector: "realestate",
+  effect: 0.32,
+  prob: 0.07,
+  cashEffect: 0,
+  desc: "Urbanisation and low rates drove property to decade highs."
+}, {
+  key: "banking_crisis",
+  label: "Banking Sector Crisis",
+  sector: "finance",
+  effect: -0.30,
+  prob: 0.05,
+  cashEffect: 0,
+  desc: "Loan defaults and liquidity concerns hit the financial sector."
+}, {
+  key: "energy_shock",
+  label: "Global Energy Shock",
+  sector: "energy",
+  effect: 0.40,
+  prob: 0.06,
+  cashEffect: -1500,
+  desc: "Supply disruption sent energy prices — and EnerGex — soaring."
+}, {
+  key: "media_surge",
+  label: "Digital Media Explosion",
+  sector: "media",
+  effect: 0.28,
+  prob: 0.07,
+  cashEffect: 0,
+  desc: "Streaming and digital ad revenue pushed media stocks up sharply."
+}, {
+  key: "inflation",
+  label: "Inflation Spike",
+  sector: null,
+  effect: -0.12,
+  prob: 0.08,
+  cashEffect: -2000,
+  desc: "Rising costs eroded corporate margins. Broad market pressure."
+}, {
+  key: "election_rally",
+  label: "Market Pre-Election Rally",
+  sector: null,
+  effect: 0.10,
+  prob: 0.06,
+  cashEffect: 0,
+  desc: "Stability expectations sent markets into a pre-election rally."
+}, {
+  key: "geo_tensions",
+  label: "Geopolitical Tensions Rise",
+  sector: "energy",
+  effect: 0.22,
+  prob: 0.07,
+  cashEffect: 0,
+  desc: "Regional conflicts disrupted supply chains. Defence and energy gained."
 }];
 const STAGE_BY_AGE = age => {
   if (age < 5) return "Infant";
@@ -1832,6 +2205,18 @@ const EVENTS = {
     text: "A growth spurt hit — you're taller and stronger.",
     health: 4,
     looks: 3
+  }, {
+    text: "You helped a classmate through a hard time. It changed how you see people.",
+    happiness: 5,
+    reputation: 4
+  }, {
+    text: "You built a small project that actually worked. The high was unlike anything.",
+    smarts: 4,
+    happiness: 6
+  }, {
+    text: "A teacher told you that you were wasting your potential. It stung because they were right.",
+    smarts: 5,
+    happiness: -4
   }],
   Adult: [{
     text: "You took a spontaneous solo trip and came back different.",
@@ -1860,6 +2245,64 @@ const EVENTS = {
     text: "You did something quietly generous that nobody noticed.",
     happiness: 4,
     reputation: 2
+  }, {
+    text: "A business partner you trusted skimmed money from the company. The discovery was ugly.",
+    cash: -8000,
+    happiness: -8,
+    reputation: -3
+  }, {
+    text: "A mentor from years ago left you a surprise gift in their will.",
+    cash: 15000,
+    happiness: 6
+  }, {
+    text: "Your accountant found an error in your favour from years ago.",
+    cash: 6000
+  }, {
+    text: "You were offered a speaking slot at a major industry conference. You nailed it.",
+    reputation: 6,
+    smarts: 2
+  }, {
+    text: "Someone published a glowing profile piece on you without asking.",
+    reputation: 8,
+    happiness: 4
+  }, {
+    text: "A heatwave hit and your productivity cratered for two months.",
+    health: -3,
+    happiness: -4
+  }, {
+    text: "You were headhunted by a foreign company. You turned it down, but it felt good.",
+    reputation: 4,
+    happiness: 5
+  }, {
+    text: "A whistleblower went public about your firm. It wasn't about you, but you were in the blast radius.",
+    reputation: -6
+  }, {
+    text: "You quietly settled a long-running personal dispute. The relief was worth more than the money.",
+    happiness: 8,
+    cash: -5000
+  }, {
+    text: "You were recognised in public and it made your whole week.",
+    reputation: 3,
+    happiness: 7
+  }, {
+    text: "A close colleague was diagnosed with something serious. It made you reassess everything.",
+    happiness: -5,
+    health: 3
+  }, {
+    text: "An investment tip from someone you trust turned out to be useless.",
+    cash: -2000
+  }, {
+    text: "You negotiated a deal that everyone said was impossible.",
+    smarts: 3,
+    reputation: 5,
+    happiness: 6
+  }, {
+    text: "You donated anonymously and never told anyone. It mattered anyway.",
+    happiness: 7
+  }, {
+    text: "Your kid did something that made headlines — in the best way.",
+    reputation: 6,
+    happiness: 10
   }],
   Elder: [{
     text: "Your joints ache more than they used to, but your mind is sharp.",
@@ -1874,6 +2317,25 @@ const EVENTS = {
   }, {
     text: "A health scare reminded you how fragile things are.",
     health: -8
+  }, {
+    text: "You wrote down things you'd never said out loud. It helped more than expected.",
+    happiness: 6,
+    smarts: 2
+  }, {
+    text: "Your grandchildren visited and the house felt alive again.",
+    happiness: 10
+  }, {
+    text: "A biography about someone you admired reminded you why you do what you do.",
+    happiness: 5,
+    reputation: 2
+  }, {
+    text: "A younger colleague asked your advice. You gave it honestly and they took it.",
+    reputation: 4,
+    happiness: 4
+  }, {
+    text: "The body is slower now. The mind compensates.",
+    health: -3,
+    smarts: 2
   }]
 };
 
@@ -3080,6 +3542,14 @@ const HEALTH_ACTIONS = [{
   cost: 30000,
   looks: 10,
   happiness: 6
+}, {
+  key: "therapy",
+  label: "Talk Therapy",
+  icon: Brain,
+  desc: "A skilled therapist. Your mind starts to clear.",
+  cost: 10000,
+  mentalHealth: 15,
+  happiness: 5
 }];
 
 /* ---------------------------------------------------------------- */
@@ -3559,7 +4029,8 @@ const FRESH_CHAR = () => ({
     smarts: 50,
     looks: 50,
     happiness: 70,
-    reputation: 30
+    reputation: 30,
+    mentalHealth: 80
   },
   family: null,
   traits: [],
@@ -3571,6 +4042,14 @@ const FRESH_CHAR = () => ({
   businessLevel: 0,
   collegeYearsLeft: 0,
   jobHopCooldown: 0,
+  collegeDegree: null,
+  // key from COLLEGE_DEGREES
+  socialMedia: {
+    active: false,
+    followers: 0,
+    startAge: null,
+    monetizing: false // unlocks at 100k followers + age 16
+  },
   sportsCareer: {
     rating: 45,
     sponsorships: [],
@@ -3671,6 +4150,15 @@ const FRESH_CHAR = () => ({
     stocks: 0,
     gold: 0,
     mf: 0
+  },
+  stockPortfolio: {},
+  // { stockKey: valueInvested }
+  world: {
+    npcPM: null,
+    // { name, party, approval }
+    macroHistory: [],
+    // [{ key, label, age }] recent macro events
+    stockMults: {} // { stockKey: priceMultiplier } — cumulative
   },
   businessStakes: [],
   achievements: [],
@@ -3833,12 +4321,8 @@ function OneLifeDossier() {
     setChar(prev => {
       const c = structuredClone(prev);
       if (pathKey === "college") {
-        c.path = "college";
-        c.collegeYearsLeft = 4;
-        pushLog(c, {
-          text: "You enrolled in college, chasing a degree and a future.",
-          tone: "path"
-        });
+        // Don't enroll yet — show degree picker first
+        goToSpec = null; // prevent other redirects
       } else if (pathKey === "job") {
         goToIndustry = true;
       } else if (pathKey === "business" || pathKey === "sports" || pathKey === "arts") {
@@ -3846,7 +4330,12 @@ function OneLifeDossier() {
       }
       return c;
     });
-    if (goToSpec) {
+    if (pathKey === "college") {
+      setTimeout(() => setPendingDecision({
+        type: "college_degree",
+        isLate: false
+      }), 0);
+    } else if (goToSpec) {
       setTimeout(() => setPendingDecision({
         type: "specialization",
         pathKey: goToSpec
@@ -4120,7 +4609,9 @@ function OneLifeDossier() {
       }
 
       // Build win chance from all sources
-      let chance = 0.20 + (c.stats.reputation - tier.repReq) / 180 + (c.politics.popularity - tier.popReq) / 200 + c.stats.smarts / 500 + (c.campaign.bonusChance || 0) + (party ? 0.08 + c.party.standing / 400 : 0);
+      let chance = 0.20 + (c.stats.reputation - tier.repReq) / 180 + (c.politics.popularity - tier.popReq) / 200 + c.stats.smarts / 500 + (c.campaign.bonusChance || 0) + (party ? 0.08 + c.party.standing / 400 : 0)
+      // NPC PM vulnerability boost
+      + (c.world?.npcPM && c.world.npcPM.approval < 30 ? 0.12 : c.world?.npcPM && c.world.npcPM.approval < 45 ? 0.06 : 0);
       if (c.campaign.isReelection) chance += (c.politics.approval - 50) / 150;
       if (!party && (tier.key === "governor" || tier.key === "national")) chance -= 0.18;
 
@@ -4708,6 +5199,43 @@ function OneLifeDossier() {
       [kind]: ""
     }));
   }
+  function buyNamedStock(stockKey, amount) {
+    if (!amount || amount <= 0) return;
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.cash < amount) return prev;
+      c.cash -= amount;
+      c.stockPortfolio = {
+        ...c.stockPortfolio,
+        [stockKey]: (c.stockPortfolio[stockKey] || 0) + amount
+      };
+      const st = NAMED_STOCKS.find(s => s.key === stockKey);
+      pushLog(c, {
+        text: `Bought ${money(amount)} of ${st?.label || stockKey}.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+  }
+  function sellNamedStock(stockKey, amount) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const held = c.stockPortfolio[stockKey] || 0;
+      const sellAmt = Math.min(amount, held);
+      if (sellAmt <= 0) return prev;
+      c.stockPortfolio = {
+        ...c.stockPortfolio,
+        [stockKey]: held - sellAmt
+      };
+      c.cash += sellAmt;
+      const st = NAMED_STOCKS.find(s => s.key === stockKey);
+      pushLog(c, {
+        text: `Sold ${money(sellAmt)} of ${st?.label || stockKey}.`,
+        tone: "money-up"
+      });
+      return c;
+    });
+  }
 
   /* ---------------- business stakes ---------------- */
 
@@ -4985,6 +5513,91 @@ function OneLifeDossier() {
         tone: "money-up"
       });
       return c;
+    });
+  }
+
+  /* ---------------- early life: childhood, teens, degrees ---------------- */
+
+  function resolveChildhoodActivity(key) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const act = CHILDHOOD_ACTIVITIES.find(a => a.key === key);
+      if (!act) return prev;
+      if (act.health) c.stats.health = clamp(c.stats.health + act.health);
+      if (act.smarts) c.stats.smarts = clamp(c.stats.smarts + act.smarts);
+      if (act.happiness) c.stats.happiness = clamp(c.stats.happiness + act.happiness);
+      if (act.reputation) c.stats.reputation = clamp(c.stats.reputation + act.reputation);
+      if (act.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + act.sportsBoost);
+      if (act.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + act.artsBoost);
+      pushLog(c, {
+        text: `Age ${c.age}: ${act.label}. ${act.desc}`,
+        tone: "neutral"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function resolveTeenChoice(key) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const act = TEEN_CHOICES.find(a => a.key === key);
+      if (!act) return prev;
+      if (act.cost && c.cash < act.cost) return prev;
+      if (act.cost) c.cash -= act.cost;
+      if (act.health) c.stats.health = clamp(c.stats.health + act.health);
+      if (act.smarts) c.stats.smarts = clamp(c.stats.smarts + act.smarts);
+      if (act.happiness) c.stats.happiness = clamp(c.stats.happiness + act.happiness);
+      if (act.reputation) c.stats.reputation = clamp(c.stats.reputation + act.reputation);
+      if (act.cashEarn) c.cash += act.cashEarn;
+      if (act.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + act.sportsBoost);
+      if (act.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + act.artsBoost);
+      if (act.socialMedia && !c.socialMedia.active) {
+        c.socialMedia.active = true;
+        c.socialMedia.startAge = c.age;
+        c.socialMedia.followers = 200;
+      }
+      // Underworld contact chance (rebel choice)
+      if (act.underworldChance && !c.underworld.contactOffered && Math.random() < act.underworldChance) {
+        c.underworld.contactOffered = true;
+        pushLog(c, {
+          text: `Someone interesting noticed you skipping class. They'll be in touch.`,
+          tone: "politics"
+        });
+        setTimeout(() => setPendingDecision({
+          type: "underworld_contact"
+        }), 0);
+      }
+      pushLog(c, {
+        text: `Age ${c.age} (Teen): ${act.label}.${act.cashEarn ? ` Earned ${money(act.cashEarn)}.` : ""}`,
+        tone: "neutral"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function resolveCollegeDegree(degreeKey, isLate) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const deg = COLLEGE_DEGREES.find(d => d.key === degreeKey);
+      if (!deg) return prev;
+      c.collegeDegree = degreeKey;
+      c.path = "college";
+      c.collegeYearsLeft = deg.years;
+      if (!isLate) pushLog(c, {
+        text: `Enrolled in ${deg.label}. ${deg.years}-year programme begins.`,
+        tone: "path"
+      });else pushLog(c, {
+        text: `Enrolled in ${deg.label} as a mature student. ${deg.years} years ahead.`,
+        tone: "path"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function enrollLateCollege() {
+    setPendingDecision({
+      type: "college_degree",
+      isLate: true
     });
   }
 
@@ -5453,9 +6066,11 @@ function OneLifeDossier() {
       if (act.health) c.stats.health = clamp(c.stats.health + act.health);
       if (act.happiness) c.stats.happiness = clamp(c.stats.happiness + act.happiness);
       if (act.looks) c.stats.looks = clamp(c.stats.looks + act.looks);
+      if (act.mentalHealth) c.stats.mentalHealth = clamp(c.stats.mentalHealth + act.mentalHealth);
       if (act.reducesDeathRisk) c.lifestyle.checkedUpThisYear = true;
+      const extras = [act.health ? `Health +${act.health}` : "", act.mentalHealth ? `Mind +${act.mentalHealth}` : "", act.looks ? `Looks +${act.looks}` : ""].filter(Boolean).join(" · ");
       pushLog(c, {
-        text: `Health: ${act.label}. −${money(act.cost)}${act.health ? ` · Health +${act.health}` : ""}${act.looks ? ` · Looks +${act.looks}` : ""}.`,
+        text: `Health: ${act.label}. −${money(act.cost)}${extras ? " · " + extras : ""}.`,
         tone: "neutral"
       });
       return c;
@@ -5651,15 +6266,34 @@ function OneLifeDossier() {
         });
         c.collegeYearsLeft -= 1;
         if (c.collegeYearsLeft <= 0) {
-          c.path = "graduated";
-          entries.push({
-            text: "You graduated! Now to choose a field.",
-            tone: "path"
-          });
-          setTimeout(() => setPendingDecision({
-            type: "industry",
-            fromCollege: true
-          }), 0);
+          const deg = c.collegeDegree ? COLLEGE_DEGREES.find(d => d.key === c.collegeDegree) : null;
+          // Apply degree bonuses
+          if (deg?.bonus) {
+            Object.entries(deg.bonus).forEach(([k, v]) => {
+              if (c.stats[k] !== undefined) c.stats[k] = clamp(c.stats[k] + v);
+            });
+          }
+          if (deg?.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + deg.sportsBoost);
+          if (deg?.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + deg.artsBoost);
+          if (deg?.politicsBoost) c.stats.reputation = clamp(c.stats.reputation + 3);
+          // If degree has a specific industry, go straight there
+          if (deg?.industryHead) {
+            c.path = "job";
+            c.job = jobForIndustry(c, deg.industryHead, true);
+            const co = getCompany(deg.industryHead, c.job.company);
+            entries.push({
+              text: `Graduated with a ${deg.label} degree! Joining ${co?.label} as ${c.job.title}.`,
+              tone: "path"
+            });
+          } else {
+            // Arts/sports science degrees → pick path
+            c.path = "graduated";
+            entries.push({
+              text: `Graduated${deg ? ` with a ${deg.label} degree` : ""}! Time to choose your direction.`,
+              tone: "path"
+            });
+            setTimeout(() => setPendingDecision("path"), 0);
+          }
         } else {
           entries.push({
             text: `Another year of college behind you. ${c.collegeYearsLeft} to go.`,
@@ -6615,7 +7249,112 @@ function OneLifeDossier() {
         tone: "neutral"
       });
       pushLog(c, entries);
-      const netWorth = c.cash + c.investments.stocks + c.investments.gold + c.investments.mf + (c.businessStakes || []).reduce((s, st) => s + st.currentValue, 0) + (c.lifestyle.assets || []).reduce((s, a) => s + a.currentValue, 0);
+
+      // ── Macro world events ─────────────────────────────────────────
+      if (c.age >= 18) {
+        MACRO_EVENTS.forEach(ev => {
+          if (Math.random() < ev.prob) {
+            // Apply to named stock portfolio
+            const newMults = {
+              ...(c.world.stockMults || {})
+            };
+            NAMED_STOCKS.forEach(st => {
+              if (!ev.sector || st.sector === ev.sector) {
+                newMults[st.key] = Math.max(0.1, (newMults[st.key] || 1) * (1 + ev.effect));
+                const held = c.stockPortfolio?.[st.key] || 0;
+                if (held > 0) {
+                  const newVal = Math.round(held * (1 + ev.effect));
+                  c.stockPortfolio = {
+                    ...(c.stockPortfolio || {}),
+                    [st.key]: Math.max(0, newVal)
+                  };
+                }
+              }
+            });
+            c.world.stockMults = newMults;
+            if (ev.cashEffect) c.cash = Math.max(0, c.cash + ev.cashEffect);
+            c.world.macroHistory = [{
+              key: ev.key,
+              label: ev.label,
+              age: c.age
+            }, ...(c.world.macroHistory || [])].slice(0, 5);
+            entries.push({
+              text: `📰 ${ev.label}: ${ev.desc}`,
+              tone: ev.effect < 0 ? "money-down" : "money-up"
+            });
+          }
+        });
+        // PM laws affect specific sectors
+        if (c.politics.office === "national" && c.politics.economyModifier !== 0) {
+          NAMED_STOCKS.filter(s => s.sector === "realestate" || s.sector === "finance").forEach(st => {
+            const held = c.stockPortfolio?.[st.key] || 0;
+            if (held > 0) {
+              c.stockPortfolio[st.key] = Math.round(held * (1 + c.politics.economyModifier * 0.5));
+            }
+          });
+        }
+      }
+
+      // ── Named stock base drift ─────────────────────────────────────
+      if (c.stockPortfolio && Object.keys(c.stockPortfolio).length > 0) {
+        Object.keys(c.stockPortfolio).forEach(key => {
+          const st = NAMED_STOCKS.find(s => s.key === key);
+          if (!st || !c.stockPortfolio[key]) return;
+          const drift = rnd(-st.vol * 0.4, st.vol * 0.6);
+          c.stockPortfolio[key] = Math.max(0, Math.round(c.stockPortfolio[key] * (1 + drift)));
+        });
+      }
+
+      // ── Mental health tick ─────────────────────────────────────────
+      if (!c.stats.mentalHealth) c.stats.mentalHealth = 80;
+      if (c.stats.happiness < 20) c.stats.mentalHealth = clamp(c.stats.mentalHealth - 3);else if (c.stats.happiness > 65) c.stats.mentalHealth = clamp(c.stats.mentalHealth + 1);
+      if (c.rel.addicted) c.stats.mentalHealth = clamp(c.stats.mentalHealth - 5);
+      if (c.stats.mentalHealth < 50) {
+        c.stats.smarts = clamp(c.stats.smarts - 2);
+        if (c.stats.mentalHealth < 30 && c.rel.partner) {
+          c.rel.partner.compatibility = clamp(c.rel.partner.compatibility - 2);
+        }
+        if (c.stats.mentalHealth < 15) {
+          applyEffects(c, {
+            health: -2,
+            happiness: -3
+          });
+        }
+      }
+
+      // ── NPC PM setup and drift ────────────────────────────────────
+      if (c.age === 25 && !c.world.npcPM) {
+        const rival = pick(RIVAL_POLITICIANS.filter(r => !c.party.affiliation || r.party !== c.party.affiliation));
+        const party = POLITICAL_PARTIES[rival?.party];
+        c.world.npcPM = {
+          name: rival?.name || "P. Sharma",
+          party: rival?.party || "bpa",
+          approval: 55
+        };
+      }
+      if (c.world.npcPM && c.politics.office !== "national") {
+        c.world.npcPM.approval = clamp(c.world.npcPM.approval + rnd(-4, 4));
+        // NPC PM passes random law occasionally (affects economy)
+        if (Math.random() < 0.15) {
+          const law = pick(LAWS);
+          if (law.economy) {
+            NAMED_STOCKS.forEach(st => {
+              const held = c.stockPortfolio?.[st.key];
+              if (held > 0 && (st.sector === "finance" || st.sector === "realestate")) {
+                c.stockPortfolio[st.key] = Math.round(held * (1 + law.economy * 0.3));
+              }
+            });
+          }
+          if (c.world.npcPM.approval < 30) {
+            entries.push({
+              text: `📰 PM ${c.world.npcPM.name}'s approval at ${c.world.npcPM.approval} — the public is turning.`,
+              tone: "politics"
+            });
+          }
+        }
+      }
+      const portfolioVal = Object.values(c.stockPortfolio || {}).reduce((s, v) => s + v, 0);
+      const netWorth = c.cash + c.investments.stocks + c.investments.gold + c.investments.mf + (c.businessStakes || []).reduce((s, st) => s + st.currentValue, 0) + (c.lifestyle.assets || []).reduce((s, a) => s + a.currentValue, 0) + portfolioVal;
       c.netWorthPeak = Math.max(c.netWorthPeak, netWorth);
 
       // lifestyle asset tick — appreciate/depreciate, annual happiness from properties/marine
@@ -6719,7 +7458,66 @@ function OneLifeDossier() {
       // check and grant achievements
       checkAchievements(c);
 
-      // decision points — only fire if traits/path not already assigned (inherited chars skip these)
+      // ── Social media tick ─────────────────────────────────────────
+      if (c.socialMedia.active) {
+        // Follower growth — trait-amplified
+        const baseGrowth = 500 + Math.random() * 2000;
+        const traitMult = c.traits.includes("notorious") || c.traits.includes("charismatic") ? 2.2 : c.traits.includes("creative") ? 1.6 : 1.0;
+        const fameMult = 1 + c.artsCareer.fame / 50;
+        const growth = Math.round(baseGrowth * traitMult * fameMult);
+        c.socialMedia.followers += growth;
+
+        // Viral spike (rare)
+        if (Math.random() < 0.05) {
+          const spike = Math.round(c.socialMedia.followers * rnd(0.5, 2.0));
+          c.socialMedia.followers += spike;
+          entries.push({
+            text: `Social media: viral moment — ${(spike / 1000).toFixed(0)}K new followers!`,
+            tone: "money-up"
+          });
+        }
+
+        // Monetization unlocks
+        if (!c.socialMedia.monetizing && c.socialMedia.followers >= 100000 && c.age >= 16) {
+          c.socialMedia.monetizing = true;
+          entries.push({
+            text: `Social media hit 100K followers — monetization unlocked.`,
+            tone: "money-up"
+          });
+        }
+
+        // Monetization income
+        if (c.socialMedia.monetizing) {
+          const income = Math.round(c.socialMedia.followers * 0.002);
+          c.cash += income;
+          if (income > 500) entries.push({
+            text: `Creator income: ${money(income)} (${(c.socialMedia.followers / 1000).toFixed(0)}K followers).`,
+            tone: "money-up"
+          });
+        }
+
+        // Feed into arts fame if on arts path
+        if (c.path === "arts") {
+          c.artsCareer.fame = clamp(c.artsCareer.fame + Math.floor(c.socialMedia.followers / 200000));
+        }
+        // Feed into politics popularity
+        if (c.politics.office || c.party.affiliation) {
+          c.politics.popularity = clamp(c.politics.popularity + Math.floor(c.socialMedia.followers / 500000));
+        }
+      }
+
+      // ── Childhood / teen decision triggers ────────────────────────
+      if (c.age === 8 && c.traits.length > 0) setTimeout(() => setPendingDecision({
+        type: "childhood_activity"
+      }), 0);
+      if (c.age === 11 && c.traits.length > 0) setTimeout(() => setPendingDecision({
+        type: "childhood_activity"
+      }), 0);
+      if (c.age >= 13 && c.age <= 17 && c.traits.length > 0) setTimeout(() => setPendingDecision({
+        type: "teen_choice"
+      }), 0);
+
+      // ── Core path decision triggers ───────────────────────────────
       if (c.age === 5 && c.traits.length === 0) {
         setTimeout(() => setPendingDecision("trait"), 0);
       } else if (c.age === 18 && !c.path) {
@@ -7306,7 +8104,69 @@ function OneLifeDossier() {
     onClick: () => setPendingDecision({
       type: "rel_divorce"
     })
-  }, "Divorce")), (char.achievements || []).length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "Divorce")), char.socialMedia.active && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
+    style: {
+      marginTop: 10
+    }
+  }, "Social Media"), /*#__PURE__*/React.createElement("div", {
+    className: "irow"
+  }, /*#__PURE__*/React.createElement("span", null, "Followers"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: "IBM Plex Mono",
+      fontWeight: 700,
+      color: "var(--gold)"
+    }
+  }, char.socialMedia.followers >= 1000000 ? `${(char.socialMedia.followers / 1000000).toFixed(1)}M` : char.socialMedia.followers >= 1000 ? `${(char.socialMedia.followers / 1000).toFixed(0)}K` : char.socialMedia.followers)), char.socialMedia.monetizing && /*#__PURE__*/React.createElement("div", {
+    className: "irow"
+  }, /*#__PURE__*/React.createElement("span", null, "Status"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--moss)",
+      fontSize: 10
+    }
+  }, "✓ Monetized")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 5,
+      background: "#ddd0aa",
+      borderRadius: 3,
+      marginTop: 4,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      background: "var(--gold)",
+      width: `${Math.min(100, char.socialMedia.followers / 10000)}%`,
+      borderRadius: 3
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "#7a6f5c",
+      textAlign: "right",
+      marginTop: 2
+    }
+  }, "Next: ", char.socialMedia.followers < 100000 ? `${((100000 - char.socialMedia.followers) / 1000).toFixed(0)}K to monetize` : char.socialMedia.followers < 1000000 ? `${((1000000 - char.socialMedia.followers) / 1000).toFixed(0)}K to 1M` : "1M+ achieved")), char.collegeDegree && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
+    style: {
+      marginTop: 10
+    }
+  }, "Education"), /*#__PURE__*/React.createElement("div", {
+    className: "irow"
+  }, /*#__PURE__*/React.createElement("span", null, "Degree"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11
+    }
+  }, COLLEGE_DEGREES.find(d => d.key === char.collegeDegree)?.label))), !char.collegeDegree && !char.path?.includes("college") && char.age >= 18 && char.age <= 45 && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      marginTop: 8,
+      fontSize: 11
+    },
+    onClick: enrollLateCollege
+  }, /*#__PURE__*/React.createElement(Brain, {
+    size: 12
+  }), " Enroll in College"), (char.achievements || []).length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "sec-title",
     style: {
       marginTop: 12
@@ -7360,6 +8220,11 @@ function OneLifeDossier() {
     label: "Reputation",
     val: char.stats.reputation,
     col: "var(--rust)"
+  }, {
+    icon: Sparkles,
+    label: "Mental Health",
+    val: char.stats.mentalHealth || 80,
+    col: (char.stats.mentalHealth || 80) < 30 ? "var(--rust)" : (char.stats.mentalHealth || 80) < 50 ? "var(--gold)" : "#9a5c8c"
   }].map(({
     icon: Icon,
     label,
@@ -8473,49 +9338,57 @@ function OneLifeDossier() {
     className: "tcol"
   }, /*#__PURE__*/React.createElement("div", {
     className: "sec-title"
-  }, "Finances"), /*#__PURE__*/React.createElement("div", {
-    className: "money-box"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "money-row total"
-  }, /*#__PURE__*/React.createElement("span", null, "Cash on Hand"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money(char.cash))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row"
-  }, /*#__PURE__*/React.createElement("span", null, "Stocks"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money(char.investments.stocks))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row"
-  }, /*#__PURE__*/React.createElement("span", null, "Gold"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money(char.investments.gold))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row"
-  }, /*#__PURE__*/React.createElement("span", null, "Mutual Funds"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money(char.investments.mf))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row"
-  }, /*#__PURE__*/React.createElement("span", null, "Business Stakes"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money((char.businessStakes || []).reduce((s, x) => s + x.currentValue, 0)))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row"
-  }, /*#__PURE__*/React.createElement("span", null, "Asset Portfolio"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money((char.lifestyle?.assets || []).reduce((s, x) => s + x.currentValue, 0)))), /*#__PURE__*/React.createElement("div", {
-    className: "money-row total",
-    style: {
-      borderTop: "1px dashed #b9ac8c",
-      marginTop: 4,
-      paddingTop: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "Net Worth"), /*#__PURE__*/React.createElement("span", {
-    className: "mono"
-  }, money(char.cash + char.investments.stocks + char.investments.gold + char.investments.mf + (char.businessStakes || []).reduce((s, x) => s + x.currentValue, 0) + (char.lifestyle?.assets || []).reduce((s, x) => s + x.currentValue, 0))))), char.age >= 18 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "Finances"), (() => {
+    const portfolioVal = Object.values(char.stockPortfolio || {}).reduce((s, v) => s + v, 0);
+    const nw = char.cash + char.investments.stocks + char.investments.gold + char.investments.mf + (char.businessStakes || []).reduce((s, x) => s + x.currentValue, 0) + (char.lifestyle?.assets || []).reduce((s, x) => s + x.currentValue, 0) + portfolioVal;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "money-box"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "money-row total"
+    }, /*#__PURE__*/React.createElement("span", null, "Cash on Hand"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(char.cash))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Index Fund"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(char.investments.stocks))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Gold"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(char.investments.gold))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Mutual Funds"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(char.investments.mf))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Stock Portfolio"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(portfolioVal))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Business Stakes"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money((char.businessStakes || []).reduce((s, x) => s + x.currentValue, 0)))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row"
+    }, /*#__PURE__*/React.createElement("span", null, "Asset Portfolio"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money((char.lifestyle?.assets || []).reduce((s, x) => s + x.currentValue, 0)))), /*#__PURE__*/React.createElement("div", {
+      className: "money-row total",
+      style: {
+        borderTop: "1px dashed #b9ac8c",
+        marginTop: 4,
+        paddingTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "Net Worth"), /*#__PURE__*/React.createElement("span", {
+      className: "mono"
+    }, money(nw))));
+  })(), char.age >= 18 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "sec-title",
     style: {
       marginTop: 12
     }
-  }, "Invest"), [{
+  }, "Index Investing"), [{
     key: "stocks",
-    label: "Stocks",
+    label: "Index Fund",
     icon: TrendingUp
   }, {
     key: "gold",
@@ -8566,7 +9439,83 @@ function OneLifeDossier() {
       fontSize: 10
     },
     onClick: () => invest(key, -1)
-  }, "Sell"))))), /*#__PURE__*/React.createElement("div", {
+  }, "Sell"))), /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
+    style: {
+      marginTop: 10
+    }
+  }, "Stock Market", (char.world?.macroHistory || []).length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      color: "var(--gold)",
+      marginLeft: 6
+    }
+  }, "📰 ", char.world.macroHistory[0]?.label)), NAMED_STOCKS.map(st => {
+    const held = char.stockPortfolio?.[st.key] || 0;
+    const mult = char.world?.stockMults?.[st.key] || 1;
+    const perfColor = mult >= 1.2 ? "var(--moss)" : mult <= 0.8 ? "var(--rust)" : "#7a6f5c";
+    return /*#__PURE__*/React.createElement("div", {
+      key: st.key,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 6px",
+        borderBottom: "1px solid rgba(0,0,0,.05)",
+        fontSize: 11
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600
+      }
+    }, st.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#7a6f5c"
+      }
+    }, st.sector, " · ", mult >= 1 ? "+" : "", Math.round((mult - 1) * 100), "% since start")), held > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10,
+        color: "var(--moss)"
+      }
+    }, money(held)), /*#__PURE__*/React.createElement("input", {
+      type: "number",
+      min: "0",
+      placeholder: "₹",
+      style: {
+        width: 55,
+        padding: "3px 5px",
+        borderRadius: 3,
+        border: "1px solid #b9ac8c",
+        fontFamily: "IBM Plex Mono",
+        fontSize: 10
+      },
+      id: `stock-${st.key}`
+    }), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-primary",
+      style: {
+        fontSize: 9,
+        padding: "3px 7px"
+      },
+      onClick: () => {
+        const inp = document.getElementById(`stock-${st.key}`);
+        buyNamedStock(st.key, Number(inp?.value) || 0);
+        if (inp) inp.value = "";
+      }
+    }, "Buy"), held > 0 && /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline",
+      style: {
+        fontSize: 9,
+        padding: "3px 7px"
+      },
+      onClick: () => sellNamedStock(st.key, held)
+    }, "Sell"));
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "tcol"
   }, char.age >= 25 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "sec-title"
@@ -8977,7 +9926,69 @@ function OneLifeDossier() {
       background: "rgba(0,0,0,.04)",
       borderRadius: 3
     }
-  }, "No party affiliation. Hold office with popularity 40+ and a party will approach you. You can also run as an independent — but reaching Governor or PM without a party is very hard."), char.politics.office && /*#__PURE__*/React.createElement("div", {
+  }, "No party affiliation. Hold office with popularity 40+ and a party will approach you. You can also run as an independent — but reaching Governor or PM without a party is very hard."), char.world?.npcPM && char.politics.office !== "national" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "sec-title",
+    style: {
+      marginTop: 10
+    }
+  }, "Current Government"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 10px",
+      borderRadius: 3,
+      background: "rgba(0,0,0,.05)",
+      borderLeft: `3px solid ${POLITICAL_PARTIES[char.world.npcPM.party]?.color || "#7a6f5c"}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700
+    }
+  }, "PM ", char.world.npcPM.name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontFamily: "IBM Plex Mono",
+      color: char.world.npcPM.approval < 30 ? "var(--rust)" : char.world.npcPM.approval > 60 ? "var(--moss)" : "#7a6f5c"
+    }
+  }, char.world.npcPM.approval, "% approval")), /*#__PURE__*/React.createElement("div", {
+    className: "mini-bar-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "#7a6f5c",
+      width: 48
+    }
+  }, "Approval"), /*#__PURE__*/React.createElement("div", {
+    className: "bar-track",
+    style: {
+      height: 4,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bar-fill",
+    style: {
+      width: `${char.world.npcPM.approval}%`,
+      background: char.world.npcPM.approval < 30 ? "var(--rust)" : char.world.npcPM.approval > 60 ? "var(--moss)" : "var(--gold)"
+    }
+  }))), char.world.npcPM.approval < 30 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--gold)",
+      marginTop: 4
+    }
+  }, "⚡ Vulnerable government — your election odds are boosted."), (char.world.macroHistory || []).length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "#7a6f5c",
+      marginTop: 4
+    }
+  }, "Latest: 📰 ", char.world.macroHistory[0]?.label))), char.politics.office && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       display: "flex",
@@ -9803,7 +10814,226 @@ function OneLifeDossier() {
     onClick: () => setPendingDecision(null)
   }, /*#__PURE__*/React.createElement("h5", null, /*#__PURE__*/React.createElement(Sparkles, {
     size: 15
-  }), " Stay Independent"), /*#__PURE__*/React.createElement("p", null, "85% royalties, full control. Build slower, keep everything."))))), pendingDecision === "trait" && /*#__PURE__*/React.createElement("div", {
+  }), " Stay Independent"), /*#__PURE__*/React.createElement("p", null, "85% royalties, full control. Build slower, keep everything."))))), pendingDecision?.type === "childhood_activity" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 600
+    }
+  }, /*#__PURE__*/React.createElement("h3", null, "After School"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "Age ", char.age, " · Choose how to spend your free time"), /*#__PURE__*/React.createElement("div", {
+    className: "option-grid",
+    style: {
+      gridTemplateColumns: "1fr 1fr 1fr"
+    }
+  }, CHILDHOOD_ACTIVITIES.map(act => /*#__PURE__*/React.createElement("div", {
+    key: act.key,
+    className: "option-card",
+    onClick: () => resolveChildhoodActivity(act.key)
+  }, /*#__PURE__*/React.createElement("h5", {
+    style: {
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement(act.icon, {
+    size: 14
+  }), " ", act.label), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11
+    }
+  }, act.desc), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap",
+      marginTop: 4
+    }
+  }, act.health && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--rust)"
+    }
+  }, "Health +", act.health), act.smarts && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--navy-2)"
+    }
+  }, "Smarts ", act.smarts > 0 ? "+" : "", act.smarts), act.happiness && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--moss)"
+    }
+  }, "Happy +", act.happiness), act.sportsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Sport +", act.sportsBoost), act.artsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Arts +", act.artsBoost))))))), pendingDecision?.type === "teen_choice" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 680
+    }
+  }, /*#__PURE__*/React.createElement("h3", null, "How are the Teen Years Going?"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "Age ", char.age, " · Every year of your teens shapes the adult you become"), /*#__PURE__*/React.createElement("div", {
+    className: "option-grid",
+    style: {
+      gridTemplateColumns: "1fr 1fr 1fr 1fr"
+    }
+  }, TEEN_CHOICES.filter(act => !act.cost || char.cash >= act.cost).map(act => /*#__PURE__*/React.createElement("div", {
+    key: act.key,
+    className: "option-card",
+    onClick: () => resolveTeenChoice(act.key)
+  }, /*#__PURE__*/React.createElement("h5", {
+    style: {
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement(act.icon, {
+    size: 13
+  }), " ", act.label), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 10
+    }
+  }, act.desc), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 5,
+      flexWrap: "wrap",
+      marginTop: 4
+    }
+  }, act.cashEarn && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--moss)"
+    }
+  }, "+", money(act.cashEarn)), act.cost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--rust)"
+    }
+  }, "−", money(act.cost)), act.smarts && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--navy-2)"
+    }
+  }, "Smarts ", act.smarts > 0 ? "+" : "", act.smarts), act.happiness && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--moss)"
+    }
+  }, "Happy +", act.happiness), act.sportsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Sport +", act.sportsBoost), act.artsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Arts +", act.artsBoost), act.socialMedia && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "#C9A64B"
+    }
+  }, "📱 Start channel")))), TEEN_CHOICES.filter(act => act.cost && char.cash < act.cost).map(act => /*#__PURE__*/React.createElement("div", {
+    key: act.key,
+    className: "option-card",
+    style: {
+      opacity: 0.35
+    }
+  }, /*#__PURE__*/React.createElement("h5", {
+    style: {
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement(act.icon, {
+    size: 13
+  }), " ", act.label), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 10,
+      color: "var(--rust)"
+    }
+  }, "Needs ", money(act.cost))))))), pendingDecision?.type === "college_degree" && /*#__PURE__*/React.createElement("div", {
+    className: "overlay"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "decision-card",
+    style: {
+      maxWidth: 700
+    }
+  }, /*#__PURE__*/React.createElement("h3", null, pendingDecision.isLate ? "Enrol as a Mature Student" : "Choose Your Degree"), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, "This determines your career ladder, graduation time, and your starting point"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 8,
+      marginTop: 12,
+      maxHeight: 420,
+      overflowY: "auto"
+    }
+  }, COLLEGE_DEGREES.map(deg => /*#__PURE__*/React.createElement("div", {
+    key: deg.key,
+    className: "option-card",
+    onClick: () => resolveCollegeDegree(deg.key, !!pendingDecision.isLate)
+  }, /*#__PURE__*/React.createElement("h5", {
+    style: {
+      fontSize: 12,
+      marginBottom: 3
+    }
+  }, deg.label), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 10,
+      color: "#655c4c",
+      marginBottom: 4
+    }
+  }, deg.desc), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 2
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      fontFamily: "IBM Plex Mono",
+      color: "var(--rust)"
+    }
+  }, deg.years, " years · ₹", (deg.costPerYear / 1000).toFixed(0), "k/yr"), deg.industryHead && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--moss)"
+    }
+  }, "→ ", INDUSTRIES[deg.industryHead]?.label, " career"), deg.bonus && Object.entries(deg.bonus).map(([k, v]) => /*#__PURE__*/React.createElement("span", {
+    key: k,
+    style: {
+      fontSize: 9,
+      color: "#7a6f5c"
+    }
+  }, "+", v, " ", k)), deg.sportsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Sport rating +", deg.sportsBoost), deg.artsBoost && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: "var(--gold)"
+    }
+  }, "Arts fame +", deg.artsBoost))))), pendingDecision.isLate && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      marginTop: 10
+    },
+    onClick: () => setPendingDecision(null)
+  }, "Cancel"))), pendingDecision === "trait" && /*#__PURE__*/React.createElement("div", {
     className: "overlay"
   }, /*#__PURE__*/React.createElement("div", {
     className: "decision-card",
