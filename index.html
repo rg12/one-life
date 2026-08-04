@@ -1709,6 +1709,18 @@ const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(v)))
 const rnd = (min, max) => Math.random() * (max - min) + min;
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const money = n => "$" + Math.round(n).toLocaleString("en-US");
+function getFame(c) {
+  const followers = c?.socialMedia?.followers || 0;
+  return clamp(Math.round(16.68 * Math.log10(followers + 1) - 45.1));
+}
+const SCALE = 9000;
+function ensureSocialMedia(c) {
+  if (!c.socialMedia.active) {
+    c.socialMedia.active = true;
+    c.socialMedia.startAge = c.age;
+    c.socialMedia.followers = Math.max(c.socialMedia.followers || 0, 300);
+  }
+}
 function applyFx(c, fx) {
   if (!fx) return;
   ["health", "smarts", "looks", "happiness", "reputation"].forEach(k => {
@@ -3222,13 +3234,6 @@ const ACHIEVEMENTS = [{
   desc: "Born Working Class, peaked at $500,000+.",
   check: c => c.family?.wealth === "Working Class" && c.netWorthPeak >= 500000
 }, {
-  key: "broke_end",
-  category: "Wealth",
-  icon: Skull,
-  label: "Died Broke",
-  desc: "Left with almost nothing.",
-  check: c => c.cash + c.investments.stocks + c.investments.gold + c.investments.mf < 1000
-}, {
   key: "portfolio_mogul",
   category: "Wealth",
   icon: Building2,
@@ -3313,13 +3318,6 @@ const ACHIEVEMENTS = [{
   desc: "Lived to 100 years old.",
   check: c => c.age >= 100
 }, {
-  key: "lone_wolf",
-  category: "Personal",
-  icon: Skull,
-  label: "Lone Wolf",
-  desc: "Died having never married.",
-  check: c => c.rel.stage === "single" && c.age > 50
-}, {
   key: "made_man",
   category: "Underworld",
   icon: Skull,
@@ -3355,6 +3353,82 @@ const ACHIEVEMENTS = [{
   desc: "Accumulated $5,000,000 in dirty money.",
   check: c => c.underworld.dirtyMoney >= 5000000
 }];
+const LEGACY_HONORS = [{
+  key: "beloved",
+  icon: Heart,
+  label: "Beloved",
+  desc: "Stayed married 20+ years and left this life happy.",
+  check: c => c.rel.stage === "married" && (c.rel.partner?.yearsTogether || 0) >= 20 && c.stats.happiness >= 55
+}, {
+  key: "devoted_parent",
+  icon: Heart,
+  label: "Devoted Parent",
+  desc: "Raised two or more children.",
+  check: c => c.rel.kids.length >= 2
+}, {
+  key: "self_made",
+  icon: TrendingUp,
+  label: "Self-Made",
+  desc: "Born with nothing, built something real.",
+  check: c => (c.family?.wealth === "Working Class" || c.originStory !== "family") && c.netWorthPeak >= 500000
+}, {
+  key: "voice_of_millions",
+  icon: Mic2,
+  label: "Voice of Millions",
+  desc: "Reached a following of a million people or more.",
+  check: c => (c.socialMedia?.followers || 0) >= 1000000 || getFame(c) >= 80
+}, {
+  key: "global_icon",
+  icon: Sparkles,
+  label: "Global Icon",
+  desc: "Built an audience of ten million or more.",
+  check: c => (c.socialMedia?.followers || 0) >= 10000000
+}, {
+  key: "philanthropist",
+  icon: Heart,
+  label: "Philanthropist",
+  desc: "Gave more than $100,000 away over a lifetime.",
+  check: c => (c.lifestyle?.totalPhilanthropy || 0) >= 100000
+}, {
+  key: "public_servant",
+  icon: Landmark,
+  label: "Public Servant",
+  desc: "Held elected office and served your community.",
+  check: c => Object.values(c.politics?.termsServed || {}).some(v => v > 0)
+}, {
+  key: "statesmans_legacy",
+  icon: Gavel,
+  label: "Statesman's Legacy",
+  desc: "Led the nation through two full terms as PM.",
+  check: c => (c.politics?.termsServed?.national || 0) >= 2
+}, {
+  key: "community_pillar",
+  icon: Trophy,
+  label: "Community Pillar",
+  desc: "Widely respected — high standing right to the end.",
+  check: c => c.stats.reputation >= 80
+}, {
+  key: "well_lived",
+  icon: Sparkles,
+  label: "A Life Well-Lived",
+  desc: "By every measure, a full and meaningful life.",
+  check: c => computeLegacyScore(c) >= 70
+}, {
+  key: "against_all_odds",
+  icon: TrendingUp,
+  label: "Against All Odds",
+  desc: "Started with nothing — no home, no family — and still built a life.",
+  check: c => c.originStory !== "family" && (c.netWorthPeak >= 100000 || computeLegacyScore(c) >= 50)
+}, {
+  key: "free_spirit",
+  icon: Heart,
+  label: "Free Spirit",
+  desc: "Charted your own course, alone by choice, and stayed happy anyway.",
+  check: c => c.rel.stage === "single" && c.age > 50 && c.stats.happiness >= 60
+}];
+function computeLegacyHonors(c) {
+  return LEGACY_HONORS.filter(h => h.check(c)).map(h => h.key);
+}
 function computeLegacyScore(c) {
   const nw = c.netWorthPeak;
   const wealthPts = nw >= 10000000 ? 25 : nw >= 1000000 ? 22 : nw >= 500000 ? 17 : nw >= 100000 ? 11 : nw >= 10000 ? 5 : 2;
@@ -4782,7 +4856,6 @@ const FRESH_CHAR = () => ({
     rankingPoints: 0
   },
   artsCareer: {
-    fame: 0,
     skill: 0,
     label: "indie",
     works: 0,
@@ -4793,7 +4866,8 @@ const FRESH_CHAR = () => ({
     milestones: [],
     discography: [],
     totalStreams: 0,
-    paintings: []
+    paintings: [],
+    albumInProgress: null
   },
   rel: {
     stage: "single",
@@ -4891,6 +4965,7 @@ const FRESH_CHAR = () => ({
   },
   businessStakes: [],
   achievements: [],
+  legacyHonors: [],
   achievementFlags: {
     wasAddicted: false,
     hadStartupExit: false
@@ -6384,7 +6459,7 @@ function OneLifeDossier() {
       if (act.happiness) c.stats.happiness = clamp(c.stats.happiness + act.happiness);
       if (act.reputation) c.stats.reputation = clamp(c.stats.reputation + act.reputation);
       if (act.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + act.sportsBoost);
-      if (act.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + act.artsBoost);
+      if (act.artsBoost) c.socialMedia.followers = (c.socialMedia.followers || 0) + act.artsBoost * 9000;
       pushLog(c, {
         text: `Age ${c.age}: ${act.label}. ${act.desc}`,
         tone: "neutral"
@@ -6406,7 +6481,10 @@ function OneLifeDossier() {
       if (act.reputation) c.stats.reputation = clamp(c.stats.reputation + act.reputation);
       if (act.cashEarn) c.cash += act.cashEarn;
       if (act.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + act.sportsBoost);
-      if (act.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + act.artsBoost);
+      if (act.artsBoost) {
+        ensureSocialMedia(c);
+        c.socialMedia.followers += act.artsBoost * SCALE;
+      }
       if (act.socialMedia && !c.socialMedia.active) {
         c.socialMedia.active = true;
         c.socialMedia.startAge = c.age;
@@ -6726,6 +6804,7 @@ function OneLifeDossier() {
   function doArtsAction(actionKey) {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const act = ARTS_ACTIONS.find(a => a.key === actionKey);
       if (!act) return prev;
       if (c.cash < act.cost) return prev;
@@ -6733,15 +6812,15 @@ function OneLifeDossier() {
       const spec = ARTS[c.specialization];
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       if (act.type === "release") {
-        const qualityScore = c.artsCareer.fame / 2 + c.stats.smarts / 3 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (act.isMajor ? 15 : 0);
+        const qualityScore = getFame(c) / 2 + c.stats.smarts / 3 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (act.isMajor ? 15 : 0);
         const hitChance = Math.min(0.90, 0.20 + qualityScore / 200 + (spec?.hitChance || 0.06));
         c.artsCareer.nextWorkBonus = false;
         c.artsCareer.works += 1;
         if (Math.random() < hitChance) {
-          const basePayout = (spec?.hitMult || 20) * (Math.round(spec?.base || 1500) + c.artsCareer.fame * 40);
+          const basePayout = (spec?.hitMult || 20) * (Math.round(spec?.base || 1500) + getFame(c) * 40);
           const payout = Math.round(basePayout * label.fameMult * (act.isMajor ? 2 : 1) * label.royaltyRate);
           c.cash += payout;
-          c.artsCareer.fame = clamp(c.artsCareer.fame + (act.isMajor ? 12 : 7));
+          c.socialMedia.followers += (act.isMajor ? 12 : 7) * SCALE;
           c.artsCareer.streakHits += 1;
           applyEffects(c, {
             reputation: spec?.hitRep || 6
@@ -6757,44 +6836,44 @@ function OneLifeDossier() {
             });
           }
           pushLog(c, {
-            text: `${act.label}: HIT! Streak: ${c.artsCareer.streakHits}. Payout: ${money(payout)}. Fame: ${c.artsCareer.fame}.`,
+            text: `${act.label}: HIT! Streak: ${c.artsCareer.streakHits}. Payout: ${money(payout)}. Followers: ${(c.socialMedia.followers / 1000).toFixed(0)}K.`,
             tone: "money-up"
           });
         } else {
           c.artsCareer.streakHits = 0;
-          c.artsCareer.fame = clamp(c.artsCareer.fame - 2);
+          c.socialMedia.followers = Math.max(0, c.socialMedia.followers - 2 * 9000);
           pushLog(c, {
             text: `${act.label}: missed the mark. Streak broken. Keep creating.`,
             tone: "money-down"
           });
         }
       } else if (act.type === "tour") {
-        const tourIncome = Math.round(act.cost * (2 + c.artsCareer.fame / 20) * label.fameMult);
+        const tourIncome = Math.round(act.cost * (2 + getFame(c) / 20) * label.fameMult);
         c.cash += tourIncome;
-        c.artsCareer.fame = clamp(c.artsCareer.fame + 8);
+        c.socialMedia.followers += 8 * SCALE;
         c.artsCareer.toursDone += 1;
         applyEffects(c, {
           reputation: 4,
           happiness: 5
         });
         pushLog(c, {
-          text: `Tour completed. Revenue: ${money(tourIncome)}. Fame: ${c.artsCareer.fame}.`,
+          text: `Tour completed. Revenue: ${money(tourIncome)}. Followers +${(8 * SCALE / 1000).toFixed(0)}K.`,
           tone: "money-up"
         });
       } else if (act.type === "collab") {
-        c.artsCareer.fame = clamp(c.artsCareer.fame + 5);
+        c.socialMedia.followers += 5 * SCALE;
         applyEffects(c, {
           happiness: 4,
           reputation: 2
         });
         pushLog(c, {
-          text: `Collaboration done. Cross-audience reach growing. Fame: ${c.artsCareer.fame}.`,
+          text: `Collaboration done. Cross-audience reach growing. Followers +${(5 * SCALE / 1000).toFixed(0)}K.`,
           tone: "neutral"
         });
       } else if (act.type === "commercial") {
         const cashGain = Math.round(30000 + Math.random() * 50000);
         c.cash += cashGain;
-        c.artsCareer.fame = clamp(c.artsCareer.fame - 3);
+        c.socialMedia.followers = Math.max(0, c.socialMedia.followers - 3 * SCALE);
         c.artsCareer.streakHits = 0;
         pushLog(c, {
           text: `Commercial work done. Earned ${money(cashGain)}. Some fans aren't pleased.`,
@@ -6807,10 +6886,10 @@ function OneLifeDossier() {
           tone: "neutral"
         });
       } else if (act.type === "pr") {
-        c.artsCareer.fame = clamp(c.artsCareer.fame + 6);
+        c.socialMedia.followers += 6 * SCALE;
         c.politics.popularity = clamp(c.politics.popularity + 3);
         pushLog(c, {
-          text: `Media blitz complete. Fame: ${c.artsCareer.fame}.`,
+          text: `Media blitz complete. Followers +${(6 * SCALE / 1000).toFixed(0)}K.`,
           tone: "neutral"
         });
       }
@@ -6820,8 +6899,9 @@ function OneLifeDossier() {
   function signLabel(labelKey) {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const lbl = ARTS_LABELS.find(l => l.key === labelKey);
-      if (!lbl || c.artsCareer.fame < lbl.reqFame) return prev;
+      if (!lbl || getFame(c) < lbl.reqFame) return prev;
       const prev_label = ARTS_LABELS.find(l => l.key === c.artsCareer.label);
       c.artsCareer.label = labelKey;
       if (lbl.advance > 0) c.cash += lbl.advance;
@@ -6836,16 +6916,17 @@ function OneLifeDossier() {
   function goOnTour(countryKey) {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const country = getCountry(countryKey);
       const cost = Math.round(15000 * country.costMult);
       if (c.cash < cost) return prev;
-      if (c.artsCareer.fame < 20) return prev;
+      if (getFame(c) < 20) return prev;
       c.cash -= cost;
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
-      const drawFactor = (c.artsCareer.fame * 1.2 + c.artsCareer.skill * 0.6) * country.payMult * label.fameMult;
+      const drawFactor = (getFame(c) * 1.2 + c.artsCareer.skill * 0.6) * country.payMult * label.fameMult;
       const revenue = Math.round(drawFactor * 350 * rnd(0.8, 1.25));
       c.cash += revenue;
-      c.artsCareer.fame = clamp(c.artsCareer.fame + 4);
+      c.socialMedia.followers += Math.round(4 * SCALE * (1 + country.payMult));
       c.artsCareer.toursDone = (c.artsCareer.toursDone || 0) + 1;
       applyEffects(c, {
         reputation: 3,
@@ -6862,18 +6943,19 @@ function OneLifeDossier() {
   function bookStadiumShow(countryKey) {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const country = getCountry(countryKey);
       const cost = Math.round(80000 * country.costMult);
       if (c.cash < cost) return prev;
-      if (c.artsCareer.fame < 50) return prev;
+      if (getFame(c) < 50) return prev;
       c.cash -= cost;
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
-      const sellOutChance = Math.min(0.92, 0.35 + c.artsCareer.fame / 150 + c.artsCareer.skill / 200);
+      const sellOutChance = Math.min(0.92, 0.35 + getFame(c) / 150 + c.artsCareer.skill / 200);
       const soldOut = Math.random() < sellOutChance;
-      const drawFactor = (c.artsCareer.fame * 1.5 + c.artsCareer.skill * 0.8) * country.payMult * label.fameMult;
+      const drawFactor = (getFame(c) * 1.5 + c.artsCareer.skill * 0.8) * country.payMult * label.fameMult;
       const revenue = Math.round(drawFactor * (soldOut ? 1400 : 700) * rnd(0.85, 1.2));
       c.cash += revenue;
-      c.artsCareer.fame = clamp(c.artsCareer.fame + (soldOut ? 10 : 5));
+      c.socialMedia.followers += Math.round((soldOut ? 10 : 5) * SCALE * (1 + country.payMult));
       c.artsCareer.stadiumsDone = (c.artsCareer.stadiumsDone || 0) + 1;
       applyEffects(c, {
         reputation: soldOut ? 10 : 5,
@@ -6891,9 +6973,33 @@ function OneLifeDossier() {
     });
     setPendingDecision(null);
   }
+  function startAlbumProduction(songCount, years) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.artsCareer.albumInProgress) return prev;
+      ensureSocialMedia(c);
+      const cost = Math.round(songCount * 3500 * (1 + (years - 1) * 0.15));
+      if (c.cash < cost) return prev;
+      c.cash -= cost;
+      c.artsCareer.albumInProgress = {
+        songCount,
+        yearsTotal: years,
+        yearsLeft: years,
+        startAge: c.age,
+        cost
+      };
+      pushLog(c, {
+        text: `Began production on a ${songCount}-track album. Planned release: ${years} year${years > 1 ? "s" : ""} from now. Budget: ${money(cost)}.`,
+        tone: "path"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
   function releaseMusic(type) {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const isAlbum = type === "album";
       const cost = isAlbum ? 20000 : 2000;
       if (c.cash < cost) return prev;
@@ -6901,20 +7007,20 @@ function OneLifeDossier() {
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       const isCreative = c.traits.includes("creative");
       const title = isAlbum ? genAlbumTitle() : genSongTitle();
-      const quality = c.artsCareer.fame / 2 + c.artsCareer.skill * 0.8 + c.stats.smarts / 6 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (isAlbum ? 10 : 0) + (isCreative ? 15 : 0);
+      const quality = getFame(c) / 2 + c.artsCareer.skill * 0.8 + c.stats.smarts / 6 + c.artsCareer.streakHits * 5 + (c.artsCareer.nextWorkBonus ? 15 : 0) + (isAlbum ? 10 : 0) + (isCreative ? 15 : 0);
       const hitChance = Math.min(0.88, 0.15 + quality / 180);
       c.artsCareer.nextWorkBonus = false;
       c.artsCareer.works += 1;
       let plays = 0;
       let peakChart = null;
       if (Math.random() < hitChance) {
-        const baseStreams = isAlbum ? Math.round((200000 + Math.random() * 5000000) * (1 + c.artsCareer.fame / 30) * label.fameMult * (isCreative ? 1.4 : 1)) : Math.round((50000 + Math.random() * 2000000) * (1 + c.artsCareer.fame / 40) * label.fameMult * (isCreative ? 1.4 : 1));
+        const baseStreams = isAlbum ? Math.round((200000 + Math.random() * 5000000) * (1 + getFame(c) / 30) * label.fameMult * (isCreative ? 1.4 : 1)) : Math.round((50000 + Math.random() * 2000000) * (1 + getFame(c) / 40) * label.fameMult * (isCreative ? 1.4 : 1));
         plays = baseStreams;
         peakChart = Math.max(1, Math.round(100 - quality / 1.5 - Math.random() * 20));
         const royaltyPayout = Math.round(plays * 0.003 * label.royaltyRate);
         c.cash += royaltyPayout;
         c.artsCareer.totalStreams += plays;
-        c.artsCareer.fame = clamp(c.artsCareer.fame + (isAlbum ? 10 : 5));
+        c.socialMedia.followers += (isAlbum ? 10 : 5) * SCALE;
         c.artsCareer.streakHits += 1;
         applyEffects(c, {
           reputation: isAlbum ? 6 : 3
@@ -6930,7 +7036,7 @@ function OneLifeDossier() {
           text: `🎵 "${title}" (${isAlbum ? "Album" : "Single"}) — Hit! ${(plays / 1000000).toFixed(1)}M streams, peaked at #${peakChart}. Royalties: ${money(royaltyPayout)}.`,
           tone: "money-up"
         });
-        if (c.artsCareer.label === "indie" && c.artsCareer.fame >= 20 && Math.random() < 0.25) {
+        if (c.artsCareer.label === "indie" && getFame(c) >= 20 && Math.random() < 0.25) {
           setTimeout(() => setPendingDecision({
             type: "label_offer"
           }), 0);
@@ -6939,7 +7045,7 @@ function OneLifeDossier() {
         plays = Math.round(1000 + Math.random() * 20000);
         c.artsCareer.totalStreams += plays;
         c.artsCareer.streakHits = 0;
-        c.artsCareer.fame = clamp(c.artsCareer.fame - 1);
+        c.socialMedia.followers = Math.max(0, c.socialMedia.followers - 1 * SCALE);
         pushLog(c, {
           text: `🎵 "${title}" (${isAlbum ? "Album" : "Single"}) — didn't connect. ${(plays / 1000).toFixed(0)}K streams. Streak broken.`,
           tone: "money-down"
@@ -6954,6 +7060,52 @@ function OneLifeDossier() {
       }];
       return c;
     });
+  }
+  function postContent() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (!c.socialMedia.active) return prev;
+      const isCreative = c.traits.includes("creative");
+      const isCharismatic = c.traits.includes("charismatic") || c.traits.includes("notorious");
+      const gain = Math.round((300 + Math.random() * 900) * (isCreative || isCharismatic ? 1.4 : 1));
+      c.socialMedia.followers += gain;
+      applyEffects(c, {
+        happiness: 1
+      });
+      pushLog(c, {
+        text: `Posted content. +${gain >= 1000 ? (gain / 1000).toFixed(1) + "K" : gain} followers.`,
+        tone: "neutral"
+      });
+      return c;
+    });
+  }
+  function respondToScoutOffer(accept) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (accept) {
+        const payout = Math.round(15000 + Math.random() * 40000);
+        c.cash += payout;
+        c.socialMedia.followers += 12 * SCALE;
+        applyEffects(c, {
+          reputation: 10,
+          happiness: 6
+        });
+        if (c.socialMedia.active) c.socialMedia.followers += Math.round(50000 + Math.random() * 300000);
+        const m = "Cast in a film role";
+        if (!c.artsCareer.milestones.includes(m)) c.artsCareer.milestones.push(m);
+        pushLog(c, {
+          text: `🎬 You took the role. Paid ${money(payout)}, and the exposure did the rest — fame and reputation both climbed.`,
+          tone: "money-up"
+        });
+      } else {
+        pushLog(c, {
+          text: `You turned the role down. Maybe the right one comes along later.`,
+          tone: "neutral"
+        });
+      }
+      return c;
+    });
+    setPendingDecision(null);
   }
   function practiceCraft() {
     setChar(prev => {
@@ -6974,9 +7126,10 @@ function OneLifeDossier() {
   function createPainting() {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const isCreative = c.traits.includes("creative");
       const title = genPaintingTitle();
-      const baseVal = Math.round((c.artsCareer.fame * 800 + c.artsCareer.skill * 600 + c.stats.smarts * 200 + c.artsCareer.works * 200 + Math.random() * 10000) * (isCreative ? 1.5 : 1));
+      const baseVal = Math.round((getFame(c) * 800 + c.artsCareer.skill * 600 + c.stats.smarts * 200 + c.artsCareer.works * 200 + Math.random() * 10000) * (isCreative ? 1.5 : 1));
       const value = Math.max(500, baseVal);
       c.artsCareer.paintings.push({
         title,
@@ -6985,7 +7138,7 @@ function OneLifeDossier() {
         sold: false
       });
       c.artsCareer.works += 1;
-      c.artsCareer.fame = clamp(c.artsCareer.fame + 2);
+      c.socialMedia.followers += 2 * SCALE;
       pushLog(c, {
         text: `🎨 Created "${title}". Initial valuation: ${money(value)}.`,
         tone: "neutral"
@@ -7016,13 +7169,14 @@ function OneLifeDossier() {
   function holdGalleryShow() {
     setChar(prev => {
       const c = structuredClone(prev);
+      ensureSocialMedia(c);
       const cost = 15000;
       if (c.cash < cost) return prev;
       c.cash -= cost;
       const unsold = c.artsCareer.paintings.filter(p => !p.sold);
       if (unsold.length === 0) return prev;
       let totalSold = 0;
-      const sellCount = Math.max(1, Math.floor(unsold.length * (0.4 + c.artsCareer.fame / 200)));
+      const sellCount = Math.max(1, Math.floor(unsold.length * (0.4 + getFame(c) / 200)));
       const toSell = unsold.slice(0, sellCount);
       toSell.forEach(p => {
         const salePrice = Math.round(p.value * (1 + rnd(0.05, 0.3)));
@@ -7035,7 +7189,7 @@ function OneLifeDossier() {
           value: salePrice
         };
       });
-      c.artsCareer.fame = clamp(c.artsCareer.fame + 6);
+      c.socialMedia.followers += 6 * SCALE;
       applyEffects(c, {
         reputation: 5,
         happiness: 4
@@ -7156,9 +7310,14 @@ function OneLifeDossier() {
         rating: clamp(45 + kidSports)
       },
       artsCareer: {
-        ...FRESH_CHAR().artsCareer,
-        fame: clamp(kidArts)
+        ...FRESH_CHAR().artsCareer
       },
+      socialMedia: kidArts > 0 ? {
+        active: true,
+        followers: Math.round(kidArts * SCALE * 0.6),
+        startAge: kidAge,
+        monetizing: false
+      } : FRESH_CHAR().socialMedia,
       log: [{
         age: kidAge,
         text: `Your parent ${char.name} has passed away at ${char.age}, leaving a legacy score of ${score}/100. You are ${kidAge} years old and inherit ${money(inheritedCash)}.${siblingLogNote}${survivingParentNote}`,
@@ -7405,7 +7564,7 @@ function OneLifeDossier() {
             });
           }
           if (deg?.sportsBoost) c.sportsCareer.rating = clamp(c.sportsCareer.rating + deg.sportsBoost);
-          if (deg?.artsBoost) c.artsCareer.fame = clamp(c.artsCareer.fame + deg.artsBoost);
+          if (deg?.artsBoost) c.socialMedia.followers = (c.socialMedia.followers || 0) + deg.artsBoost * 9000;
           if (deg?.politicsBoost) c.stats.reputation = clamp(c.stats.reputation + 3);
           if (deg?.industryHead) {
             c.path = "job";
@@ -7721,13 +7880,8 @@ function OneLifeDossier() {
         const spec = ARTS[c.specialization];
         if (spec) {
           const labelDef = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
-          if (c.artsCareer.fame > 0 && Math.random() < 0.3) {
-            c.artsCareer.fame = clamp(c.artsCareer.fame - 1);
-          }
-          if (c.traits.includes("creative") && c.artsCareer.fame > 0) {
-            c.artsCareer.fame = clamp(c.artsCareer.fame + 1);
-          }
-          const fameMult = 0.2 + c.artsCareer.fame / 80;
+          const fame = getFame(c);
+          const fameMult = 0.2 + fame / 80;
           const passiveBase = spec.base + c.stats.reputation * spec.rMult / 10 + (spec.sMult || 0) * c.stats.smarts / 10;
           const streakBonus = 1 + c.artsCareer.streakHits * 0.1;
           const finalIncome = Math.round(passiveBase * fameMult * labelDef.fameMult * labelDef.royaltyRate * streakBonus);
@@ -7740,7 +7894,7 @@ function OneLifeDossier() {
             let newStreams = 0;
             c.artsCareer.discography = (c.artsCareer.discography || []).map(track => {
               const decay = track.type === "album" ? 0.85 : 0.70;
-              const fanBase = Math.round(track.plays * (1 - decay) * (1 + c.artsCareer.fame / 100) * (isCreative ? 1.2 : 1));
+              const fanBase = Math.round(track.plays * (1 - decay) * (1 + fame / 100) * (isCreative ? 1.2 : 1));
               newStreams += fanBase;
               return {
                 ...track,
@@ -7761,14 +7915,14 @@ function OneLifeDossier() {
             const unsoldCount = (c.artsCareer.paintings || []).filter(p => !p.sold).length;
             c.artsCareer.paintings = (c.artsCareer.paintings || []).map(p => {
               if (p.sold) return p;
-              const appRate = 0.10 + c.artsCareer.fame / 200 + rnd(-0.02, 0.05);
+              const appRate = 0.10 + fame / 200 + rnd(-0.02, 0.05);
               return {
                 ...p,
                 value: Math.round(p.value * (1 + appRate))
               };
             });
             const portfolioVal = c.artsCareer.paintings.filter(p => !p.sold).reduce((s, p) => s + p.value, 0);
-            if (unsoldCount > 0 && Math.random() < 0.08 + c.artsCareer.fame / 500) {
+            if (unsoldCount > 0 && Math.random() < 0.08 + fame / 500) {
               const topPainting = [...c.artsCareer.paintings].filter(p => !p.sold).sort((a, b) => b.value - a.value)[0];
               if (topPainting) {
                 const auctionPrice = Math.round(topPainting.value * (3 + Math.random() * 3));
@@ -7794,7 +7948,7 @@ function OneLifeDossier() {
             });
           }
           entries.push({
-            text: `${spec.label} royalties: ${money(finalIncome)} (Fame ${c.artsCareer.fame} · ${labelDef.label}${c.artsCareer.streakHits > 1 ? ` · 🔥${c.artsCareer.streakHits}-hit` : ""}).`,
+            text: `${spec.label} royalties: ${money(finalIncome)} (Fame ${fame} · ${labelDef.label}${c.artsCareer.streakHits > 1 ? ` · 🔥${c.artsCareer.streakHits}-hit` : ""}).`,
             tone: "money-up"
           });
         }
@@ -8674,11 +8828,70 @@ function OneLifeDossier() {
         wasAddicted: true
       };
       checkAchievements(c);
+      if (c.artsCareer.albumInProgress) {
+        const prod = c.artsCareer.albumInProgress;
+        prod.yearsLeft -= 1;
+        if (prod.yearsLeft <= 0) {
+          const isCreative = c.traits.includes("creative");
+          const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
+          const title = genAlbumTitle();
+          const quality = c.artsCareer.skill * 1.3 + c.stats.smarts * 0.5 + prod.yearsTotal * 9 + Math.min(prod.songCount, 14) * 1.8 + getFame(c) * 0.3 + c.artsCareer.streakHits * 4 + (isCreative ? 12 : 0);
+          const hitChance = Math.min(0.92, 0.18 + quality / 170);
+          let plays = 0,
+            peakChart = null;
+          if (Math.random() < hitChance) {
+            const scopeMult = 0.6 + Math.min(prod.songCount, 14) / 10;
+            const baseStreams = Math.round((300000 + Math.random() * 8000000) * scopeMult * (1 + getFame(c) / 25) * label.fameMult * (isCreative ? 1.3 : 1));
+            plays = baseStreams;
+            peakChart = Math.max(1, Math.round(100 - quality / 1.3 - Math.random() * 15));
+            const royaltyPayout = Math.round(plays * 0.0035 * label.royaltyRate);
+            c.cash += royaltyPayout;
+            c.artsCareer.totalStreams = (c.artsCareer.totalStreams || 0) + plays;
+            c.socialMedia.followers += Math.round(15 * SCALE * scopeMult);
+            c.artsCareer.streakHits += 1;
+            applyEffects(c, {
+              reputation: 10
+            });
+            const qualityTier = quality >= 90 ? "a critical and commercial triumph" : quality >= 65 ? "a genuine hit" : "a solid success";
+            entries.push({
+              text: `🎵 "${title}" (${prod.songCount}-track album, ${prod.yearsTotal}yr in the making) dropped — ${qualityTier}. ${(plays / 1000000).toFixed(1)}M streams, peaked at #${peakChart}. Royalties: ${money(royaltyPayout)}.`,
+              tone: "money-up"
+            });
+            if (peakChart === 1) {
+              const m = `"${title}" hit #1 on the charts`;
+              if (!c.artsCareer.milestones.includes(m)) c.artsCareer.milestones.push(m);
+            }
+            const bigM = `Released a ${prod.songCount}-track album after ${prod.yearsTotal} years of work`;
+            if (prod.songCount >= 12 && !c.artsCareer.milestones.includes(bigM)) c.artsCareer.milestones.push(bigM);
+          } else {
+            plays = Math.round(5000 + Math.random() * 80000 * (prod.songCount / 10));
+            c.artsCareer.totalStreams = (c.artsCareer.totalStreams || 0) + plays;
+            c.artsCareer.streakHits = 0;
+            entries.push({
+              text: `🎵 "${title}" (${prod.songCount}-track album, ${prod.yearsTotal}yr in the making) dropped — didn't land the way you hoped. ${(plays / 1000).toFixed(0)}K streams. All that time, and the world barely noticed.`,
+              tone: "money-down"
+            });
+          }
+          c.artsCareer.discography = [...c.artsCareer.discography, {
+            title,
+            type: "album",
+            plays,
+            peakChart,
+            releaseAge: c.age,
+            songCount: prod.songCount,
+            yearsInProduction: prod.yearsTotal
+          }];
+          c.artsCareer.works += 1;
+          c.artsCareer.albumInProgress = null;
+        } else {
+          c.artsCareer.skill = clamp(c.artsCareer.skill + rnd(1, 3));
+        }
+      }
       if (c.socialMedia.active) {
         const baseGrowth = 500 + Math.random() * 2000;
         const traitMult = c.traits.includes("notorious") || c.traits.includes("charismatic") ? 2.2 : c.traits.includes("creative") ? 1.6 : 1.0;
-        const fameMult = 1 + c.artsCareer.fame / 50;
-        const growth = Math.round(baseGrowth * traitMult * fameMult);
+        const reachMult = 1 + getFame(c) / 50;
+        const growth = Math.round(baseGrowth * traitMult * reachMult);
         c.socialMedia.followers += growth;
         if (Math.random() < 0.05) {
           const spike = Math.round(c.socialMedia.followers * rnd(0.5, 2.0));
@@ -8702,9 +8915,6 @@ function OneLifeDossier() {
             text: `Creator income: ${money(income)} (${(c.socialMedia.followers / 1000).toFixed(0)}K followers).`,
             tone: "money-up"
           });
-        }
-        if (c.path === "arts") {
-          c.artsCareer.fame = clamp(c.artsCareer.fame + Math.floor(c.socialMedia.followers / 200000));
         }
         if (c.politics.office || c.party.affiliation) {
           c.politics.popularity = clamp(c.politics.popularity + Math.floor(c.socialMedia.followers / 500000));
@@ -8802,6 +9012,39 @@ function OneLifeDossier() {
           }
         }
       }
+      if (c.age >= 18 && c.rel.kids.length > 0 && Math.random() < 0.02) {
+        const youngKids = c.rel.kids.filter(k => {
+          const a = c.age - (k.birthAge || 0);
+          return a >= 0 && a <= 10;
+        });
+        if (youngKids.length > 0) {
+          const kid = pick(youngKids);
+          if (!c.socialMedia.active) {
+            c.socialMedia.active = true;
+            c.socialMedia.startAge = c.age;
+            c.socialMedia.followers = Math.round(80000 + Math.random() * 400000);
+            entries.push({
+              text: `📱 You posted a video of ${kid.name} on a whim. It exploded — ${(c.socialMedia.followers / 1000).toFixed(0)}K followers overnight, out of nowhere.`,
+              tone: "money-up"
+            });
+          } else {
+            const spike = Math.round(c.socialMedia.followers * rnd(0.6, 1.8) + 100000);
+            c.socialMedia.followers += spike;
+            entries.push({
+              text: `📱 A video of ${kid.name} went properly viral. +${(spike / 1000).toFixed(0)}K followers in a matter of days.`,
+              tone: "money-up"
+            });
+          }
+          applyEffects(c, {
+            happiness: 5
+          });
+        }
+      }
+      if (c.age >= 14 && !c.politics.office && Math.random() < 0.012 + Math.max(0, c.stats.looks - 60) / 3000 + Math.max(0, c.stats.reputation - 50) / 4000) {
+        setTimeout(() => setPendingDecision({
+          type: "scout_offer"
+        }), 0);
+      }
       if (c.age === 5 && c.traits.length === 0) {
         setTimeout(() => setPendingDecision("trait"), 0);
       } else if (c.age === 18 && !c.path) {
@@ -8826,6 +9069,7 @@ function OneLifeDossier() {
       if (dead) {
         c.alive = false;
         c.causeOfDeath = cause;
+        c.legacyHonors = computeLegacyHonors(c);
         pushLog(c, {
           text: cause,
           tone: "death"
@@ -9657,19 +9901,19 @@ function OneLifeDossier() {
         type: "housing_catalog"
       })
     }, isHomeless ? "Find Housing" : "Change Housing"));
-  })(), char.age >= 10 && char.path !== "arts" && React.createElement(React.Fragment, null, React.createElement("div", {
+  })(), char.age >= 10 && React.createElement(React.Fragment, null, React.createElement("div", {
     className: "sec-title",
     style: {
       marginTop: 10
     }
-  }, "Creative Pursuits"), React.createElement("div", {
+  }, "Talents & Reach"), React.createElement("div", {
     style: {
       fontSize: 10,
       color: "#7a6f5c",
       fontStyle: "italic",
       marginBottom: 5
     }
-  }, "Sing, paint, practice \u2014 you don't need to make it your career to start."), React.createElement("div", {
+  }, "Your fame, craft, and athletic form \u2014 always visible, whatever you end up doing with them."), React.createElement("div", {
     className: "mini-bar-row",
     style: {
       marginBottom: 3
@@ -9678,7 +9922,7 @@ function OneLifeDossier() {
     style: {
       fontSize: 10,
       color: "#7a6f5c",
-      width: 36
+      width: 52
     }
   }, "Fame"), React.createElement("div", {
     className: "bar-track",
@@ -9689,26 +9933,26 @@ function OneLifeDossier() {
   }, React.createElement("div", {
     className: "bar-fill",
     style: {
-      width: `${char.artsCareer.fame}%`,
+      width: `${getFame(char)}%`,
       background: "var(--gold)"
     }
   })), React.createElement("span", {
     style: {
       fontSize: 10,
       fontFamily: "IBM Plex Mono",
-      width: 20,
+      width: 44,
       textAlign: "right"
     }
-  }, char.artsCareer.fame)), React.createElement("div", {
+  }, getFame(char), " ", char.socialMedia.active && `· ${char.socialMedia.followers >= 1000000 ? (char.socialMedia.followers / 1000000).toFixed(1) + "M" : char.socialMedia.followers >= 1000 ? (char.socialMedia.followers / 1000).toFixed(0) + "K" : char.socialMedia.followers}`)), React.createElement("div", {
     className: "mini-bar-row",
     style: {
-      marginBottom: 6
+      marginBottom: 3
     }
   }, React.createElement("span", {
     style: {
       fontSize: 10,
       color: "#7a6f5c",
-      width: 36
+      width: 52
     }
   }, "Skill"), React.createElement("div", {
     className: "bar-track",
@@ -9726,10 +9970,48 @@ function OneLifeDossier() {
     style: {
       fontSize: 10,
       fontFamily: "IBM Plex Mono",
-      width: 20,
+      width: 44,
       textAlign: "right"
     }
   }, char.artsCareer.skill)), React.createElement("div", {
+    className: "mini-bar-row",
+    style: {
+      marginBottom: 6
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: "#7a6f5c",
+      width: 52
+    }
+  }, "Sports"), React.createElement("div", {
+    className: "bar-track",
+    style: {
+      height: 5,
+      flex: 1
+    }
+  }, React.createElement("div", {
+    className: "bar-fill",
+    style: {
+      width: `${char.sportsCareer.rating}%`,
+      background: "var(--rust)"
+    }
+  })), React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontFamily: "IBM Plex Mono",
+      width: 44,
+      textAlign: "right"
+    }
+  }, char.sportsCareer.rating)), char.path !== "arts" && React.createElement(React.Fragment, null, char.artsCareer.albumInProgress && React.createElement("div", {
+    style: {
+      padding: "6px 8px",
+      background: "rgba(201,166,75,.10)",
+      borderRadius: 3,
+      marginBottom: 5,
+      fontSize: 10
+    }
+  }, "\uD83C\uDF99 Album in production: ", char.artsCareer.albumInProgress.songCount, " tracks, ", char.artsCareer.albumInProgress.yearsLeft, " yr", char.artsCareer.albumInProgress.yearsLeft !== 1 ? "s" : "", " left"), React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -9759,12 +10041,32 @@ function OneLifeDossier() {
     className: "btn btn-outline",
     style: {
       fontSize: 10,
+      padding: "5px 8px",
+      opacity: char.artsCareer.albumInProgress ? 0.4 : 1
+    },
+    onClick: () => setPendingDecision({
+      type: "produce_album"
+    }),
+    disabled: !!char.artsCareer.albumInProgress
+  }, "\uD83C\uDF99 Produce Album"), React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 10,
       padding: "5px 8px"
     },
     onClick: createPainting
   }, React.createElement(Sparkles, {
     size: 11
-  }), " Paint"), char.artsCareer.fame >= 20 && React.createElement("button", {
+  }), " Paint"), char.socialMedia.active && React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 10,
+      padding: "5px 8px"
+    },
+    onClick: postContent
+  }, React.createElement(TrendingUp, {
+    size: 11
+  }), " Post Content"), getFame(char) >= 20 && React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 10,
@@ -9775,7 +10077,7 @@ function OneLifeDossier() {
     })
   }, React.createElement(Landmark, {
     size: 11
-  }), " Go on Tour"))), char.family?.parents?.length > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
+  }), " Go on Tour")))), char.family?.parents?.length > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
     className: "sec-title",
     style: {
       marginTop: 10
@@ -9956,7 +10258,17 @@ function OneLifeDossier() {
       textAlign: "right",
       marginTop: 2
     }
-  }, "Next: ", char.socialMedia.followers < 100000 ? `${((100000 - char.socialMedia.followers) / 1000).toFixed(0)}K to monetize` : char.socialMedia.followers < 1000000 ? `${((1000000 - char.socialMedia.followers) / 1000).toFixed(0)}K to 1M` : "1M+ achieved")), (char.degrees.length > 0 || char.currentDegree) && React.createElement(React.Fragment, null, React.createElement("div", {
+  }, "Next: ", char.socialMedia.followers < 100000 ? `${((100000 - char.socialMedia.followers) / 1000).toFixed(0)}K to monetize` : char.socialMedia.followers < 1000000 ? `${((1000000 - char.socialMedia.followers) / 1000).toFixed(0)}K to 1M` : "1M+ achieved"), React.createElement("button", {
+    className: "btn btn-outline btn-block",
+    style: {
+      fontSize: 10,
+      padding: "5px 8px",
+      marginTop: 5
+    },
+    onClick: postContent
+  }, React.createElement(TrendingUp, {
+    size: 11
+  }), " Post Content")), (char.degrees.length > 0 || char.currentDegree) && React.createElement(React.Fragment, null, React.createElement("div", {
     className: "sec-title",
     style: {
       marginTop: 10
@@ -10756,8 +11068,8 @@ function OneLifeDossier() {
     }, React.createElement("div", {
       className: "bar-fill",
       style: {
-        width: `${char.artsCareer.fame}%`,
-        background: char.artsCareer.fame >= 70 ? "var(--gold)" : char.artsCareer.fame >= 40 ? "var(--moss)" : "#b9ac8c"
+        width: `${getFame(char)}%`,
+        background: getFame(char) >= 70 ? "var(--gold)" : getFame(char) >= 40 ? "var(--moss)" : "#b9ac8c"
       }
     })), React.createElement("span", {
       style: {
@@ -10767,7 +11079,7 @@ function OneLifeDossier() {
         textAlign: "right",
         fontWeight: 700
       }
-    }, char.artsCareer.fame)), React.createElement("div", {
+    }, getFame(char))), React.createElement("div", {
       className: "mini-bar-row",
       style: {
         marginBottom: 3
@@ -10801,10 +11113,10 @@ function OneLifeDossier() {
     }, char.artsCareer.skill)), React.createElement("div", {
       style: {
         fontSize: 9,
-        color: char.artsCareer.fame >= 70 ? "var(--gold)" : char.artsCareer.fame >= 40 ? "var(--moss)" : "#7a6f5c",
+        color: getFame(char) >= 70 ? "var(--gold)" : getFame(char) >= 40 ? "var(--moss)" : "#7a6f5c",
         textAlign: "right"
       }
-    }, char.artsCareer.fame >= 80 ? "Global Icon" : char.artsCareer.fame >= 60 ? "National Star" : char.artsCareer.fame >= 40 ? "Rising Name" : char.artsCareer.fame >= 20 ? "Building Profile" : "Unknown"), char.artsCareer.nextWorkBonus && React.createElement("div", {
+    }, getFame(char) >= 80 ? "Global Icon" : getFame(char) >= 60 ? "National Star" : getFame(char) >= 40 ? "Rising Name" : getFame(char) >= 20 ? "Building Profile" : "Unknown"), char.artsCareer.nextWorkBonus && React.createElement("div", {
       style: {
         fontSize: 10,
         color: "var(--gold)",
@@ -10831,12 +11143,12 @@ function OneLifeDossier() {
       style: {
         fontSize: 10,
         padding: "6px 6px",
-        opacity: char.artsCareer.fame < 20 ? 0.4 : 1
+        opacity: getFame(char) < 20 ? 0.4 : 1
       },
       onClick: () => setPendingDecision({
         type: "world_tour"
       }),
-      disabled: char.artsCareer.fame < 20
+      disabled: getFame(char) < 20
     }, React.createElement(Landmark, {
       size: 11
     }), " Tour"), React.createElement("button", {
@@ -10844,12 +11156,12 @@ function OneLifeDossier() {
       style: {
         fontSize: 10,
         padding: "6px 6px",
-        opacity: char.artsCareer.fame < 50 ? 0.4 : 1
+        opacity: getFame(char) < 50 ? 0.4 : 1
       },
       onClick: () => setPendingDecision({
         type: "stadium_show"
       }),
-      disabled: char.artsCareer.fame < 50
+      disabled: getFame(char) < 50
     }, "\uD83C\uDFDF Stadium")), (char.artsCareer.toursDone > 0 || char.artsCareer.stadiumsDone > 0) && React.createElement("div", {
       style: {
         fontSize: 10,
@@ -10858,7 +11170,15 @@ function OneLifeDossier() {
       }
     }, char.artsCareer.toursDone > 0 && `${char.artsCareer.toursDone} tour${char.artsCareer.toursDone > 1 ? "s" : ""}`, char.artsCareer.toursDone > 0 && char.artsCareer.stadiumsDone > 0 && " · ", char.artsCareer.stadiumsDone > 0 && `${char.artsCareer.stadiumsDone} stadium show${char.artsCareer.stadiumsDone > 1 ? "s" : ""}`), isMusician && React.createElement(React.Fragment, null, React.createElement("div", {
       className: "sec-title"
-    }, "Music Career"), React.createElement("div", {
+    }, "Music Career"), char.artsCareer.albumInProgress && React.createElement("div", {
+      style: {
+        padding: "8px 10px",
+        background: "rgba(201,166,75,.10)",
+        borderRadius: 3,
+        marginBottom: 6,
+        fontSize: 11
+      }
+    }, "\uD83C\uDF99 Album in production: ", char.artsCareer.albumInProgress.songCount, " tracks, ", char.artsCareer.albumInProgress.yearsLeft, " yr", char.artsCareer.albumInProgress.yearsLeft !== 1 ? "s" : "", " left"), React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
@@ -10885,19 +11205,14 @@ function OneLifeDossier() {
       className: "btn btn-primary",
       style: {
         fontSize: 11,
-        padding: "7px 10px"
+        padding: "7px 10px",
+        opacity: char.artsCareer.albumInProgress ? 0.4 : 1
       },
-      onClick: () => releaseMusic("album"),
-      disabled: char.cash < 20000
-    }, React.createElement(Sparkles, {
-      size: 12
-    }), " Release Album", React.createElement("span", {
-      style: {
-        fontSize: 9,
-        opacity: .7,
-        marginLeft: 4
-      }
-    }, "$20,000"))), (char.artsCareer.discography || []).length > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
+      onClick: () => setPendingDecision({
+        type: "produce_album"
+      }),
+      disabled: !!char.artsCareer.albumInProgress
+    }, "\uD83C\uDF99 Produce Album")), (char.artsCareer.discography || []).length > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
       className: "sec-title"
     }, "Discography"), React.createElement("div", {
       style: {
@@ -10925,7 +11240,13 @@ function OneLifeDossier() {
         flex: 1,
         fontWeight: 600
       }
-    }, track.title), React.createElement("span", {
+    }, track.title, track.songCount ? React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: "#9a8c7c",
+        fontWeight: 400
+      }
+    }, " \xB7 ", track.songCount, " tracks") : ""), React.createElement("span", {
       style: {
         fontFamily: "IBM Plex Mono",
         fontSize: 9,
@@ -11089,7 +11410,7 @@ function OneLifeDossier() {
       className: "sec-title"
     }, "Label / Studio / Gallery"), ARTS_LABELS.map(lbl => {
       const isActive = lbl.key === char.artsCareer.label;
-      const canSign = char.artsCareer.fame >= lbl.reqFame && !isActive;
+      const canSign = getFame(char) >= lbl.reqFame && !isActive;
       return React.createElement("div", {
         key: lbl.key,
         style: {
@@ -11131,7 +11452,7 @@ function OneLifeDossier() {
           padding: "3px 8px"
         },
         onClick: () => signLabel(lbl.key)
-      }, "Sign"), lbl.reqFame > char.artsCareer.fame && !isActive && React.createElement("span", {
+      }, "Sign"), lbl.reqFame > getFame(char) && !isActive && React.createElement("span", {
         style: {
           fontSize: 9,
           color: "var(--rust)",
@@ -13037,7 +13358,7 @@ function OneLifeDossier() {
     style: {
       gridTemplateColumns: "1fr"
     }
-  }, ARTS_LABELS.filter(l => l.key !== "indie" && l.reqFame <= char.artsCareer.fame + 5).slice(-2).map(lbl => React.createElement("div", {
+  }, ARTS_LABELS.filter(l => l.key !== "indie" && l.reqFame <= getFame(char) + 5).slice(-2).map(lbl => React.createElement("div", {
     key: lbl.key,
     className: "option-card",
     onClick: () => signLabel(lbl.key)
@@ -13594,8 +13915,112 @@ function OneLifeDossier() {
       },
       onClick: () => setPendingDecision(null)
     }, "Close")));
-  })(), pendingDecision?.type === "world_tour" && (() => {
-    const eligible = char.artsCareer.fame >= 20;
+  })(), pendingDecision?.type === "produce_album" && (() => {
+    const songOptions = [6, 10, 14];
+    const yearOptions = [1, 2, 3];
+    return React.createElement("div", {
+      className: "overlay"
+    }, React.createElement("div", {
+      className: "decision-card",
+      style: {
+        maxWidth: 600
+      }
+    }, React.createElement("h3", null, "Produce an Album"), React.createElement("div", {
+      className: "sub"
+    }, "Skill ", char.artsCareer.skill, " \xB7 Smarts ", char.stats.smarts, " \u2014 your vitals shape how it turns out"), React.createElement("p", {
+      style: {
+        fontSize: 12,
+        color: "#655c4c",
+        lineHeight: 1.5,
+        margin: "10px 0"
+      }
+    }, "More tracks and more time both raise the ceiling \u2014 but only pay off if your skill and smarts back them up. A rushed, thin record from someone who hasn't put in the work still comes out mediocre."), React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gap: 8,
+        marginTop: 8
+      }
+    }, songOptions.map(songCount => yearOptions.map(years => {
+      const cost = Math.round(songCount * 3500 * (1 + (years - 1) * 0.15));
+      const canAfford = char.cash >= cost;
+      const quality = char.artsCareer.skill * 1.3 + char.stats.smarts * 0.5 + years * 9 + Math.min(songCount, 14) * 1.8 + getFame(char) * 0.3;
+      const qualityLabel = quality >= 90 ? "Excellent" : quality >= 65 ? "Good" : quality >= 40 ? "Fair" : "Weak";
+      const qualityColor = quality >= 90 ? "var(--gold)" : quality >= 65 ? "var(--moss)" : quality >= 40 ? "#7a6f5c" : "var(--rust)";
+      return React.createElement("div", {
+        key: `${songCount}-${years}`,
+        className: "option-card",
+        style: {
+          opacity: canAfford ? 1 : 0.45,
+          padding: "10px"
+        },
+        onClick: () => canAfford && startAlbumProduction(songCount, years)
+      }, React.createElement("h5", {
+        style: {
+          fontSize: 12
+        }
+      }, songCount, " tracks \xB7 ", years, " yr", years > 1 ? "s" : ""), React.createElement("div", {
+        style: {
+          fontSize: 10,
+          color: qualityColor,
+          fontWeight: 700,
+          marginTop: 2
+        }
+      }, "Projected: ", qualityLabel), React.createElement("div", {
+        style: {
+          fontSize: 10,
+          fontFamily: "IBM Plex Mono",
+          color: "var(--rust)",
+          marginTop: 4
+        }
+      }, money(cost)));
+    }))), React.createElement("button", {
+      className: "btn btn-outline btn-block",
+      style: {
+        marginTop: 12
+      },
+      onClick: () => setPendingDecision(null)
+    }, "Cancel")));
+  })(), pendingDecision?.type === "scout_offer" && React.createElement("div", {
+    className: "overlay"
+  }, React.createElement("div", {
+    className: "decision-card",
+    style: {
+      textAlign: "center"
+    }
+  }, React.createElement("h3", null, "Someone Noticed You"), React.createElement("div", {
+    className: "sub"
+  }, "A casting director approached you after seeing you around town"), React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#655c4c",
+      lineHeight: 1.6,
+      margin: "12px 0"
+    }
+  }, "They're casting a small role for an upcoming film and think you'd be right for it. It's not a life-changing part \u2014 but it's real exposure, and it pays."), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      marginTop: 8
+    }
+  }, React.createElement("button", {
+    className: "btn btn-primary",
+    style: {
+      flex: 1,
+      justifyContent: "center"
+    },
+    onClick: () => respondToScoutOffer(true)
+  }, React.createElement(Sparkles, {
+    size: 14
+  }), " Take the Role"), React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      flex: 1,
+      justifyContent: "center"
+    },
+    onClick: () => respondToScoutOffer(false)
+  }, "Pass")))), pendingDecision?.type === "world_tour" && (() => {
+    const eligible = getFame(char) >= 20;
     return React.createElement("div", {
       className: "overlay"
     }, React.createElement("div", {
@@ -13605,7 +14030,7 @@ function OneLifeDossier() {
       }
     }, React.createElement("h3", null, "Go on Tour"), React.createElement("div", {
       className: "sub"
-    }, "Fame ", char.artsCareer.fame, " \xB7 Skill ", char.artsCareer.skill, " ", !eligible && React.createElement("span", {
+    }, "Fame ", getFame(char), " \xB7 Skill ", char.artsCareer.skill, " ", !eligible && React.createElement("span", {
       style: {
         color: "var(--rust)"
       }
@@ -13621,7 +14046,7 @@ function OneLifeDossier() {
     }, COUNTRIES.map(co => {
       const cost = Math.round(15000 * co.costMult);
       const label = ARTS_LABELS.find(l => l.key === char.artsCareer.label) || ARTS_LABELS[0];
-      const drawFactor = (char.artsCareer.fame * 1.2 + char.artsCareer.skill * 0.6) * co.payMult * label.fameMult;
+      const drawFactor = (getFame(char) * 1.2 + char.artsCareer.skill * 0.6) * co.payMult * label.fameMult;
       const estRevenue = Math.round(drawFactor * 350);
       const canAfford = char.cash >= cost;
       return React.createElement("div", {
@@ -13674,7 +14099,7 @@ function OneLifeDossier() {
       onClick: () => setPendingDecision(null)
     }, "Close")));
   })(), pendingDecision?.type === "stadium_show" && (() => {
-    const eligible = char.artsCareer.fame >= 50;
+    const eligible = getFame(char) >= 50;
     return React.createElement("div", {
       className: "overlay"
     }, React.createElement("div", {
@@ -13684,7 +14109,7 @@ function OneLifeDossier() {
       }
     }, React.createElement("h3", null, "Book a Stadium"), React.createElement("div", {
       className: "sub"
-    }, "Fame ", char.artsCareer.fame, " \xB7 Skill ", char.artsCareer.skill, " ", !eligible && React.createElement("span", {
+    }, "Fame ", getFame(char), " \xB7 Skill ", char.artsCareer.skill, " ", !eligible && React.createElement("span", {
       style: {
         color: "var(--rust)"
       }
@@ -13700,8 +14125,8 @@ function OneLifeDossier() {
     }, COUNTRIES.map(co => {
       const cost = Math.round(80000 * co.costMult);
       const label = ARTS_LABELS.find(l => l.key === char.artsCareer.label) || ARTS_LABELS[0];
-      const sellOutChance = Math.min(0.92, 0.35 + char.artsCareer.fame / 150 + char.artsCareer.skill / 200);
-      const drawFactor = (char.artsCareer.fame * 1.5 + char.artsCareer.skill * 0.8) * co.payMult * label.fameMult;
+      const sellOutChance = Math.min(0.92, 0.35 + getFame(char) / 150 + char.artsCareer.skill / 200);
+      const drawFactor = (getFame(char) * 1.5 + char.artsCareer.skill * 0.8) * co.payMult * label.fameMult;
       const estRevenue = Math.round(drawFactor * 1000);
       const canAfford = char.cash >= cost;
       return React.createElement("div", {
@@ -15867,7 +16292,21 @@ function OneLifeDossier() {
       style: {
         fontSize: 12
       }
-    }, char.rel.stage, char.rel.kids.length > 0 ? ` · ${char.rel.kids.length} kid${char.rel.kids.length !== 1 ? "s" : ""}` : "")), char.politics.termsServed.national > 0 && React.createElement("div", {
+    }, char.rel.stage, char.rel.kids.length > 0 ? ` · ${char.rel.kids.length} kid${char.rel.kids.length !== 1 ? "s" : ""}` : "")), (char.socialMedia?.followers || 0) > 0 && React.createElement("div", {
+      className: "epitaph-row"
+    }, React.createElement("span", null, "Followers"), React.createElement("span", {
+      className: "mono",
+      style: {
+        fontSize: 12
+      }
+    }, char.socialMedia.followers >= 1000000 ? `${(char.socialMedia.followers / 1000000).toFixed(1)}M` : `${(char.socialMedia.followers / 1000).toFixed(0)}K`)), (char.lifestyle?.totalPhilanthropy || 0) > 0 && React.createElement("div", {
+      className: "epitaph-row"
+    }, React.createElement("span", null, "Given to Others"), React.createElement("span", {
+      className: "mono",
+      style: {
+        fontSize: 12
+      }
+    }, money(char.lifestyle.totalPhilanthropy))), char.politics.termsServed.national > 0 && React.createElement("div", {
       className: "epitaph-row"
     }, React.createElement("span", null, "PM Terms"), React.createElement("span", {
       className: "mono",
@@ -15881,7 +16320,59 @@ function OneLifeDossier() {
       style: {
         fontSize: 12
       }
-    }, char.geo.prestige)))), allAchs.length > 0 && React.createElement("div", {
+    }, char.geo.prestige)))), (char.legacyHonors || []).length > 0 && React.createElement("div", {
+      style: {
+        background: "linear-gradient(135deg, rgba(201,166,75,.15), rgba(92,122,94,.10))",
+        border: "1.5px solid var(--gold)",
+        borderRadius: 4,
+        padding: "16px 20px",
+        marginBottom: 14,
+        boxShadow: "0 8px 20px rgba(0,0,0,0.3)"
+      }
+    }, React.createElement("div", {
+      style: {
+        fontFamily: "IBM Plex Mono",
+        fontSize: 11,
+        color: "var(--gold)",
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "\u2726 In Memoriam \u2726"), React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "#7a6f5c",
+        fontStyle: "italic",
+        marginBottom: 12
+      }
+    }, "A life is more than a balance sheet. Here's what ", char.name, " actually gave the world."), React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 8
+      }
+    }, LEGACY_HONORS.filter(h => char.legacyHonors.includes(h.key)).map(h => React.createElement("div", {
+      key: h.key,
+      title: h.desc,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: "var(--parchment)",
+        color: "var(--ink)",
+        padding: "6px 12px",
+        borderRadius: 4,
+        fontSize: 12,
+        fontFamily: "'Fraunces',serif",
+        fontWeight: 700,
+        border: "1px solid var(--gold)"
+      }
+    }, React.createElement(h.icon, {
+      size: 13,
+      style: {
+        color: "var(--gold)"
+      }
+    }), " ", h.label)))), allAchs.length > 0 && React.createElement("div", {
       style: {
         background: "var(--parchment)",
         borderRadius: 4,
