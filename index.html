@@ -2737,27 +2737,106 @@ const PARTNER_NAMES_NB = ["Kiran", "Devan", "Sam", "Aman", "Nikhil", "Ravi", "As
 const KID_NAMES_F = ["Aanya", "Myra", "Saira", "Zara", "Kiara", "Aditi", "Ishani", "Tara", "Prisha", "Anaya"];
 const KID_NAMES_M = ["Aarav", "Vihaan", "Ishaan", "Aryan", "Kabir", "Reyan", "Vivaan", "Advik", "Krish", "Arjun"];
 const KID_NAMES = [...KID_NAMES_M, ...KID_NAMES_F];
+const NAMES_BY_COUNTRY = {
+  usa: {
+    male: ["James", "Michael", "David", "John", "Robert", "William", "Joseph", "Daniel", "Matthew", "Christopher"],
+    female: ["Emily", "Sarah", "Jessica", "Ashley", "Amanda", "Jennifer", "Elizabeth", "Megan", "Lauren", "Rachel"]
+  },
+  uk: {
+    male: ["Oliver", "George", "Harry", "Jack", "Charlie", "Thomas", "William", "Alfie", "James", "Henry"],
+    female: ["Olivia", "Amelia", "Isla", "Ava", "Emily", "Sophia", "Grace", "Lily", "Freya", "Charlotte"]
+  },
+  germany: {
+    male: ["Lukas", "Maximilian", "Felix", "Jonas", "Leon", "Paul", "Finn", "Elias", "Noah", "Ben"],
+    female: ["Mia", "Emma", "Hannah", "Lena", "Lea", "Anna", "Sophie", "Marie", "Laura", "Julia"]
+  },
+  japan: {
+    male: ["Haruto", "Yuto", "Sota", "Ren", "Riku", "Kaito", "Hiroshi", "Kenji", "Takumi", "Daiki"],
+    female: ["Yui", "Aoi", "Hina", "Sakura", "Yuna", "Rin", "Mei", "Riko", "Akari", "Nanami"]
+  },
+  australia: {
+    male: ["Jack", "Oliver", "William", "Noah", "Thomas", "James", "Lachlan", "Cooper", "Ethan", "Lucas"],
+    female: ["Charlotte", "Olivia", "Amelia", "Mia", "Isla", "Ruby", "Chloe", "Grace", "Zoe", "Ivy"]
+  },
+  india: {
+    male: ["Arjun", "Rohan", "Vikram", "Aditya", "Karan", "Rahul", "Nikhil", "Aryan", "Dev", "Sid"],
+    female: ["Priya", "Ananya", "Kavya", "Neha", "Riya", "Meera", "Pooja", "Sneha", "Divya", "Shreya"]
+  },
+  brazil: {
+    male: ["Lucas", "Gabriel", "Matheus", "Pedro", "Rafael", "Gustavo", "Bruno", "Felipe", "Thiago", "Diego"],
+    female: ["Ana", "Julia", "Beatriz", "Mariana", "Camila", "Larissa", "Fernanda", "Leticia", "Amanda", "Gabriela"]
+  },
+  mexico: {
+    male: ["Santiago", "Mateo", "Diego", "Alejandro", "Emiliano", "Miguel", "Carlos", "Luis", "Jose", "Javier"],
+    female: ["Sofia", "Valentina", "Camila", "Ximena", "Maria", "Fernanda", "Isabella", "Daniela", "Regina", "Renata"]
+  },
+  china: {
+    male: ["Wei", "Jun", "Hao", "Yang", "Chen", "Feng", "Lei", "Qiang", "Ming", "Tao"],
+    female: ["Mei", "Ling", "Xia", "Yan", "Fang", "Hui", "Jing", "Na", "Ying", "Xin"]
+  },
+  turkey: {
+    male: ["Mehmet", "Ahmet", "Mustafa", "Emre", "Burak", "Ali", "Yusuf", "Can", "Kerem", "Onur"],
+    female: ["Elif", "Zeynep", "Ayse", "Fatma", "Merve", "Ece", "Selin", "Deniz", "Buse", "Irem"]
+  },
+  nigeria: {
+    male: ["Chinedu", "Emeka", "Oluwaseun", "Ifeanyi", "Tunde", "Chidi", "Femi", "Kelechi", "Obinna", "Segun"],
+    female: ["Ngozi", "Amara", "Chiamaka", "Folake", "Adaeze", "Bisi", "Uche", "Nkechi", "Yetunde", "Chioma"]
+  },
+  philippines: {
+    male: ["Juan", "Mateo", "Angelo", "Miguel", "Jose", "Antonio", "Rafael", "Diego", "Emmanuel", "Paolo"],
+    female: ["Maria", "Angela", "Andrea", "Camille", "Isabel", "Grace", "Kristine", "Jasmine", "Nicole", "Patricia"]
+  },
+  egypt: {
+    male: ["Ahmed", "Mohamed", "Mahmoud", "Youssef", "Omar", "Khaled", "Hassan", "Karim", "Amr", "Tarek"],
+    female: ["Fatma", "Mariam", "Nour", "Salma", "Yasmin", "Heba", "Dina", "Rana", "Aya", "Mona"]
+  },
+  vietnam: {
+    male: ["Minh", "Duc", "Long", "Nam", "Hieu", "Khanh", "Tuan", "Phong", "Quang", "Huy"],
+    female: ["Linh", "Huong", "Lan", "Mai", "Trang", "Thu", "Anh", "Ngoc", "Hoa", "Yen"]
+  },
+  ethiopia: {
+    male: ["Abebe", "Dawit", "Yohannes", "Tesfaye", "Getachew", "Solomon", "Kebede", "Girma", "Bekele", "Henok"],
+    female: ["Almaz", "Tigist", "Hirut", "Meseret", "Selam", "Genet", "Marta", "Sara", "Bethlehem", "Rahel"]
+  },
+  bangladesh: {
+    male: ["Rahim", "Karim", "Jahid", "Rakib", "Shakil", "Farhan", "Tanvir", "Imran", "Sohel", "Nayeem"],
+    female: ["Fatima", "Nusrat", "Sadia", "Sumaiya", "Taslima", "Rina", "Ayesha", "Jannat", "Shirin", "Marzia"]
+  },
+  haiti: {
+    male: ["Jean", "Pierre", "Wilner", "Jacques", "Emmanuel", "Frantz", "Wilson", "Andre", "Junior", "Mackenson"],
+    female: ["Marie", "Nadege", "Fabiola", "Rose", "Guerline", "Sherline", "Wideline", "Darline", "Yvrose", "Islande"]
+  }
+};
+function getCountryNames(countryKey) {
+  const pool = NAMES_BY_COUNTRY[countryKey] || NAMES_BY_COUNTRY.india;
+  return {
+    male: pool.male,
+    female: pool.female,
+    nb: [...pool.male.slice(0, 5), ...pool.female.slice(0, 5)]
+  };
+}
 function genPartner(c) {
   const persList = Object.values(PARTNER_PERSONALITIES);
   const pers = persList[Math.floor(Math.random() * persList.length)];
+  const names = getCountryNames(c.country);
   let namePool;
   let partnerGender;
   if (c.attraction === "men") {
-    namePool = PARTNER_NAMES_M;
+    namePool = names.male;
     partnerGender = "male";
   } else if (c.attraction === "women") {
-    namePool = PARTNER_NAMES_F;
+    namePool = names.female;
     partnerGender = "female";
   } else {
     const r = Math.random();
     if (r < 0.45) {
-      namePool = PARTNER_NAMES_F;
+      namePool = names.female;
       partnerGender = "female";
     } else if (r < 0.90) {
-      namePool = PARTNER_NAMES_M;
+      namePool = names.male;
       partnerGender = "male";
     } else {
-      namePool = PARTNER_NAMES_NB;
+      namePool = names.nb;
       partnerGender = "nb";
     }
   }
@@ -2777,11 +2856,12 @@ function genPartner(c) {
 }
 function generateParents(wealthTierLabel, countryKey) {
   const country = getCountry(countryKey);
+  const names = getCountryNames(countryKey);
   const pool = PARENT_OCCUPATIONS[wealthTierLabel] || PARENT_OCCUPATIONS["Middle Class"];
   const makeParent = () => {
     const r = Math.random();
     const gender = r < 0.47 ? "male" : r < 0.94 ? "female" : "nb";
-    const namePool = gender === "male" ? PARTNER_NAMES_M : gender === "female" ? PARTNER_NAMES_F : PARTNER_NAMES_NB;
+    const namePool = gender === "male" ? names.male : gender === "female" ? names.female : names.nb;
     const name = namePool[Math.floor(Math.random() * namePool.length)];
     const occ = pool[Math.floor(Math.random() * pool.length)];
     const income = Math.round(occ.incomeBase * country.payMult * rnd(0.85, 1.2));
@@ -3632,6 +3712,182 @@ const HOUSING_TIERS = [{
 function getHousingTier(key) {
   return HOUSING_TIERS.find(h => h.key === key) || HOUSING_TIERS[1];
 }
+const CITY_BY_COUNTRY = {
+  usa: {
+    city1: "New York",
+    city2: "Los Angeles",
+    resort: "Miami, South Beach"
+  },
+  uk: {
+    city1: "London",
+    city2: "Manchester",
+    resort: "Cornwall"
+  },
+  germany: {
+    city1: "Berlin",
+    city2: "Munich",
+    resort: "Bavarian Alps"
+  },
+  japan: {
+    city1: "Tokyo",
+    city2: "Osaka",
+    resort: "Okinawa"
+  },
+  australia: {
+    city1: "Sydney",
+    city2: "Melbourne",
+    resort: "Gold Coast"
+  },
+  india: {
+    city1: "Mumbai",
+    city2: "Delhi",
+    resort: "Goa"
+  },
+  brazil: {
+    city1: "São Paulo",
+    city2: "Rio de Janeiro",
+    resort: "Florianópolis"
+  },
+  mexico: {
+    city1: "Mexico City",
+    city2: "Guadalajara",
+    resort: "Cancún"
+  },
+  china: {
+    city1: "Shanghai",
+    city2: "Beijing",
+    resort: "Hainan"
+  },
+  turkey: {
+    city1: "Istanbul",
+    city2: "Ankara",
+    resort: "Bodrum"
+  },
+  nigeria: {
+    city1: "Lagos",
+    city2: "Abuja",
+    resort: "Calabar"
+  },
+  philippines: {
+    city1: "Manila",
+    city2: "Cebu",
+    resort: "Palawan"
+  },
+  egypt: {
+    city1: "Cairo",
+    city2: "Alexandria",
+    resort: "Sharm El Sheikh"
+  },
+  vietnam: {
+    city1: "Ho Chi Minh City",
+    city2: "Hanoi",
+    resort: "Da Nang"
+  },
+  ethiopia: {
+    city1: "Addis Ababa",
+    city2: "Bahir Dar",
+    resort: "Hawassa"
+  },
+  bangladesh: {
+    city1: "Dhaka",
+    city2: "Chittagong",
+    resort: "Cox's Bazar"
+  },
+  haiti: {
+    city1: "Port-au-Prince",
+    city2: "Cap-Haïtien",
+    resort: "Jacmel"
+  }
+};
+const PROPERTY_ARCHETYPES = [{
+  archKey: "flat",
+  label: "Flat",
+  subFn: c => c.city1,
+  price: 500000,
+  rep: 8,
+  happBoost: 3,
+  appRate: 0.05
+}, {
+  archKey: "flat_prem",
+  label: "Premium Flat",
+  subFn: c => `${c.city1}, Downtown`,
+  price: 1200000,
+  rep: 14,
+  happBoost: 4,
+  appRate: 0.06
+}, {
+  archKey: "bungalow",
+  label: "Bungalow",
+  subFn: c => c.city2,
+  price: 2500000,
+  rep: 20,
+  happBoost: 6,
+  appRate: 0.06
+}, {
+  archKey: "mansion",
+  label: "Mansion",
+  subFn: c => `${c.city2}, Upscale District`,
+  price: 5500000,
+  rep: 28,
+  happBoost: 8,
+  appRate: 0.07
+}, {
+  archKey: "villa",
+  label: "Beach Villa",
+  subFn: c => c.resort,
+  price: 1300000,
+  rep: 13,
+  happBoost: 9,
+  appRate: 0.06
+}, {
+  archKey: "farmhouse",
+  label: "Country Estate",
+  subFn: c => `Outside ${c.city1}`,
+  price: 1600000,
+  rep: 11,
+  happBoost: 10,
+  appRate: 0.05
+}, {
+  archKey: "penthouse",
+  label: "Penthouse",
+  subFn: c => `${c.city1}, Skyline`,
+  price: 6500000,
+  rep: 26,
+  happBoost: 7,
+  appRate: 0.06
+}, {
+  archKey: "apt_intl",
+  label: "International Apartment",
+  subFn: () => "London, Chelsea",
+  price: 5000000,
+  rep: 22,
+  happBoost: 5,
+  appRate: 0.05
+}, {
+  archKey: "island",
+  label: "Private Island",
+  subFn: () => "Maldives",
+  price: 15000000,
+  rep: 45,
+  happBoost: 14,
+  appRate: 0.04
+}];
+const ALL_COUNTRY_PROPERTIES = COUNTRIES.flatMap(country => {
+  const cities = CITY_BY_COUNTRY[country.key] || CITY_BY_COUNTRY.usa;
+  return PROPERTY_ARCHETYPES.map(arch => ({
+    key: `${arch.archKey}_${country.key}`,
+    label: arch.label,
+    sub: arch.subFn(cities),
+    price: arch.price,
+    rep: arch.rep,
+    happBoost: arch.happBoost,
+    appRate: arch.appRate,
+    countryKey: country.key
+  }));
+});
+function getVisibleProperties(countryKey) {
+  return ALL_COUNTRY_PROPERTIES.filter(p => p.countryKey === countryKey);
+}
 const ASSET_CATALOG = {
   vehicles: [{
     key: "sedan",
@@ -3690,87 +3946,7 @@ const ASSET_CATALOG = {
     rep: 10,
     depRate: 0.10
   }],
-  properties: [{
-    key: "flat_andheri",
-    label: "Flat",
-    sub: "Mumbai, Andheri",
-    price: 500000,
-    rep: 8,
-    happBoost: 3,
-    appRate: 0.05
-  }, {
-    key: "flat_bkc",
-    label: "Premium Flat",
-    sub: "Mumbai, BKC",
-    price: 1200000,
-    rep: 14,
-    happBoost: 4,
-    appRate: 0.06
-  }, {
-    key: "bungalow_bandra",
-    label: "Bungalow",
-    sub: "Mumbai, Bandra",
-    price: 2500000,
-    rep: 20,
-    happBoost: 6,
-    appRate: 0.06
-  }, {
-    key: "mansion_juhu",
-    label: "Mansion",
-    sub: "Mumbai, Juhu",
-    price: 5500000,
-    rep: 28,
-    happBoost: 8,
-    appRate: 0.07
-  }, {
-    key: "villa_goa",
-    label: "Beach Villa",
-    sub: "Goa, North",
-    price: 1300000,
-    rep: 13,
-    happBoost: 9,
-    appRate: 0.06
-  }, {
-    key: "farmhouse",
-    label: "Farmhouse",
-    sub: "Lonavala / Alibaug",
-    price: 1600000,
-    rep: 11,
-    happBoost: 10,
-    appRate: 0.05
-  }, {
-    key: "penthouse_delhi",
-    label: "Penthouse",
-    sub: "Delhi, Lutyens",
-    price: 6500000,
-    rep: 26,
-    happBoost: 7,
-    appRate: 0.06
-  }, {
-    key: "apt_dubai",
-    label: "Penthouse",
-    sub: "Dubai, Downtown",
-    price: 4000000,
-    rep: 24,
-    happBoost: 6,
-    appRate: 0.06
-  }, {
-    key: "apt_london",
-    label: "Apartment",
-    sub: "London, Chelsea",
-    price: 5000000,
-    rep: 22,
-    happBoost: 5,
-    appRate: 0.05
-  }, {
-    key: "island",
-    label: "Private Island",
-    sub: "Maldives",
-    price: 15000000,
-    rep: 45,
-    happBoost: 14,
-    appRate: 0.04
-  }],
+  properties: ALL_COUNTRY_PROPERTIES,
   aviation: [{
     key: "jet_share",
     label: "Jet Membership",
@@ -4437,7 +4613,8 @@ const FRESH_CHAR = () => ({
   housing: {
     tier: "family",
     ownedValue: 0,
-    yearsAtTier: 0
+    yearsAtTier: 0,
+    linkedAssetKey: null
   },
   stats: {
     health: 70,
@@ -4698,7 +4875,7 @@ function OneLifeDossier() {
       const parentNames = parents.map(p => `${p.name} (${p.occupation})`).join(" and ");
       const hasGrandparentLegacy = Math.random() < 0.35;
       const grandparentRelation = hasGrandparentLegacy ? pick(GRANDPARENT_RELATIONS) : null;
-      const grandparentNamePool = grandparentRelation?.includes("grandmother") ? PARTNER_NAMES_F : PARTNER_NAMES_M;
+      const grandparentNamePool = grandparentRelation?.includes("grandmother") ? getCountryNames(country.key).female : getCountryNames(country.key).male;
       const grandparentName = hasGrandparentLegacy ? pick(grandparentNamePool) : null;
       setChar({
         ...FRESH_CHAR(),
@@ -4754,7 +4931,8 @@ function OneLifeDossier() {
         housing: {
           tier: isStreet ? "homeless" : "orphanage",
           ownedValue: 0,
-          yearsAtTier: 0
+          yearsAtTier: 0,
+          linkedAssetKey: null
         },
         stats: hardshipStats,
         log: [{
@@ -5666,7 +5844,8 @@ function OneLifeDossier() {
       const c = structuredClone(prev);
       if (c.rel.kids.length >= 3 || c.rel.stage !== "married") return prev;
       const isBoy = Math.random() < 0.5;
-      const pool = isBoy ? KID_NAMES_M : KID_NAMES_F;
+      const names = getCountryNames(c.country);
+      const pool = isBoy ? names.male : names.female;
       const availableNames = pool.filter(n => !c.rel.kids.find(k => k.name === n));
       const name = availableNames[Math.floor(Math.random() * availableNames.length)] || pool[0];
       c.rel.kids.push({
@@ -6247,7 +6426,7 @@ function OneLifeDossier() {
       const newTier = getHousingTier(tierKey);
       const oldTier = getHousingTier(c.housing.tier);
       const country = getCountry(c.country);
-      if (oldTier.type === "own" && c.housing.ownedValue > 0) {
+      if (oldTier.type === "own" && !c.housing.linkedAssetKey && c.housing.ownedValue > 0) {
         c.cash += c.housing.ownedValue;
         pushLog(c, {
           text: `Sold your ${oldTier.label.toLowerCase()} for ${money(c.housing.ownedValue)}.`,
@@ -6261,7 +6440,8 @@ function OneLifeDossier() {
         c.housing = {
           tier: tierKey,
           ownedValue: price,
-          yearsAtTier: 0
+          yearsAtTier: 0,
+          linkedAssetKey: null
         };
         applyEffects(c, {
           reputation: 3
@@ -6274,13 +6454,45 @@ function OneLifeDossier() {
         c.housing = {
           tier: tierKey,
           ownedValue: 0,
-          yearsAtTier: 0
+          yearsAtTier: 0,
+          linkedAssetKey: null
         };
         pushLog(c, {
           text: `Moved into: ${newTier.label}.`,
           tone: "neutral"
         });
       }
+      return c;
+    });
+    setPendingDecision(null);
+  }
+  function moveIntoProperty(assetKey) {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      const asset = c.lifestyle.assets.find(a => a.key === assetKey);
+      if (!asset) return prev;
+      const oldTier = getHousingTier(c.housing.tier);
+      if (oldTier.type === "own" && !c.housing.linkedAssetKey && c.housing.ownedValue > 0) {
+        c.cash += c.housing.ownedValue;
+        pushLog(c, {
+          text: `Sold your ${oldTier.label.toLowerCase()} for ${money(c.housing.ownedValue)}.`,
+          tone: "money-up"
+        });
+      }
+      c.housing = {
+        tier: "owned_asset",
+        ownedValue: asset.currentValue,
+        yearsAtTier: 0,
+        linkedAssetKey: assetKey
+      };
+      applyEffects(c, {
+        happiness: 5,
+        reputation: 2
+      });
+      pushLog(c, {
+        text: `Moved into your ${asset.label.toLowerCase()} in ${asset.sub}. This is home now.`,
+        tone: "money-up"
+      });
       return c;
     });
     setPendingDecision(null);
@@ -6886,6 +7098,18 @@ function OneLifeDossier() {
         text: `Sold ${owned.label} for ${money(owned.currentValue)}.`,
         tone: "money-up"
       });
+      if (c.housing.linkedAssetKey === key) {
+        c.housing = {
+          tier: "family",
+          ownedValue: 0,
+          yearsAtTier: 0,
+          linkedAssetKey: null
+        };
+        pushLog(c, {
+          text: `You sold the home you were living in. Time to find new housing.`,
+          tone: "money-down"
+        });
+      }
       return c;
     });
   }
@@ -8027,7 +8251,8 @@ function OneLifeDossier() {
         }
       }
       const portfolioVal = Object.values(c.stockPortfolio || {}).reduce((s, v) => s + v, 0);
-      const netWorth = c.cash + c.investments.stocks + c.investments.gold + c.investments.mf + (c.businessStakes || []).reduce((s, st) => s + st.currentValue, 0) + (c.lifestyle.assets || []).reduce((s, a) => s + a.currentValue, 0) + portfolioVal + (c.housing?.ownedValue || 0);
+      const homeValueIfNotLinked = c.housing?.linkedAssetKey ? 0 : c.housing?.ownedValue || 0;
+      const netWorth = c.cash + c.investments.stocks + c.investments.gold + c.investments.mf + (c.businessStakes || []).reduce((s, st) => s + st.currentValue, 0) + (c.lifestyle.assets || []).reduce((s, a) => s + a.currentValue, 0) + portfolioVal + homeValueIfNotLinked;
       c.netWorthPeak = Math.max(c.netWorthPeak, netWorth);
       c.lifestyle.assets = (c.lifestyle.assets || []).map(asset => {
         const def = findAsset(asset.key);
@@ -8095,7 +8320,32 @@ function OneLifeDossier() {
           tone: "money-up"
         });
       }
-      {
+      if (c.housing.tier === "owned_asset" && c.housing.linkedAssetKey) {
+        const linkedAsset = c.lifestyle.assets.find(a => a.key === c.housing.linkedAssetKey);
+        c.housing.yearsAtTier = (c.housing.yearsAtTier || 0) + 1;
+        if (!linkedAsset) {
+          c.housing = {
+            tier: "family",
+            ownedValue: 0,
+            yearsAtTier: 0,
+            linkedAssetKey: null
+          };
+          entries.push({
+            text: `You sold the property you were living in and had to arrange new housing.`,
+            tone: "money-down"
+          });
+        } else {
+          c.housing.ownedValue = linkedAsset.currentValue;
+          const health = 2;
+          const happiness = Math.round((linkedAsset.happBoost || 0) / 2) + 3;
+          const mentalHealth = Math.min(14, Math.round(((linkedAsset.repBoost || 0) + (linkedAsset.happBoost || 0)) / 3));
+          applyEffects(c, {
+            health,
+            happiness
+          });
+          c.stats.mentalHealth = clamp(c.stats.mentalHealth + mentalHealth);
+        }
+      } else {
         const hTier = getHousingTier(c.housing.tier);
         const countryCost = getCountry(c.country).costMult;
         c.housing.yearsAtTier = (c.housing.yearsAtTier || 0) + 1;
@@ -8108,7 +8358,8 @@ function OneLifeDossier() {
             c.housing = {
               tier: "homeless",
               ownedValue: 0,
-              yearsAtTier: 0
+              yearsAtTier: 0,
+              linkedAssetKey: null
             };
             applyEffects(c, {
               happiness: -10,
@@ -8561,6 +8812,33 @@ function OneLifeDossier() {
           margin: 40px auto;
           text-align: center;
         }
+        .intro-screen {
+          height: 100vh;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          padding: 18px;
+          overflow: hidden;
+        }
+        .intro-inner {
+          width: 100%;
+          max-width: 940px;
+          max-height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .intro-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 26px;
+          margin-top: 16px;
+          align-items: start;
+        }
+        @media (max-width: 720px) {
+          .intro-grid { grid-template-columns: 1fr; }
+        }
         .title-mark {
           font-family: 'Fraunces', serif;
           font-weight: 700;
@@ -8732,6 +9010,7 @@ function OneLifeDossier() {
         .invest-row input {
           width: 70px; padding: 6px 8px; border-radius:3px; border:1px solid #b9ac8c;
           font-family:'IBM Plex Mono',monospace; font-size:12px;
+          background: #fff; color: var(--ink);
         }
         .invest-label { display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; width:76px;}
         .invest-val { font-family:'IBM Plex Mono',monospace; font-size:12px; margin-left:auto; margin-right:8px; }
@@ -8767,19 +9046,52 @@ function OneLifeDossier() {
         .epitaph .cause { font-size:13px; color:#7a5c1e; margin-bottom:14px; font-style:italic; }
         .epitaph-row { display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #ddd0aa; }
       `), screen === "intro" && React.createElement("div", {
-    className: "center-col"
+    className: "intro-screen"
   }, React.createElement("div", {
-    className: "title-mark"
+    className: "intro-inner"
+  }, React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, React.createElement("div", {
+    className: "title-mark",
+    style: {
+      fontSize: 30
+    }
   }, "ONE LIFE"), React.createElement("div", {
     className: "title-sub"
-  }, "A Dossier \xB7 Intake & Review"), React.createElement("div", {
-    className: "intro-card"
-  }, React.createElement("p", null, "You don't pick your family, your face, or your first breath \u2014 the dice do that. Everything after is on you."), React.createElement("p", null, "Roll for the family you're born into, choose the trait that defines your childhood, then decide how you chase money, fame, or power: school, a job, a business, the stage, the field, or the ballot."), React.createElement("div", {
-    className: "file-line"
-  }, React.createElement("span", null, "FILE TYPE"), React.createElement("span", null, "LIFE SIMULATION \u2014 BASE BUILD")), React.createElement("div", {
-    className: "file-line"
+  }, "A Dossier \xB7 Intake & Review")), React.createElement("div", {
+    className: "intro-grid"
+  }, React.createElement("div", null, React.createElement("div", {
+    className: "intro-card",
+    style: {
+      padding: "16px 18px",
+      marginTop: 0
+    }
+  }, React.createElement("p", {
+    style: {
+      fontSize: 12.5,
+      marginBottom: 8
+    }
+  }, "You don't pick your family, your face, or your first breath \u2014 the dice do that. Everything after is on you."), React.createElement("div", {
+    className: "file-line",
+    style: {
+      marginTop: 8,
+      paddingTop: 8
+    }
+  }, React.createElement("span", null, "FILE TYPE"), React.createElement("span", null, "LIFE SIMULATION")), React.createElement("div", {
+    className: "file-line",
+    style: {
+      marginTop: 4,
+      paddingTop: 0,
+      borderTop: "none"
+    }
   }, React.createElement("span", null, "STATUS"), React.createElement("span", null, "INTAKE PENDING"))), React.createElement("input", {
     className: "name-input",
+    style: {
+      marginTop: 12,
+      marginBottom: 0
+    },
     placeholder: "Name this life\u2026",
     value: nameInput,
     onChange: e => setNameInput(e.target.value),
@@ -8791,17 +9103,17 @@ function OneLifeDossier() {
     }
   }, React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 10,
       color: "var(--gold)",
       fontFamily: "'IBM Plex Mono',monospace",
       letterSpacing: 2,
-      marginBottom: 8,
+      marginBottom: 6,
       textAlign: "center"
     }
   }, "YOUR GENDER"), React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8,
+      gap: 6,
       justifyContent: "center"
     }
   }, [["male", "Male"], ["female", "Female"], ["nb", "Non-binary"]].map(([k, label]) => React.createElement("button", {
@@ -8809,29 +9121,29 @@ function OneLifeDossier() {
     className: `btn ${genderInput === k ? "btn-primary" : "btn-outline"}`,
     style: {
       flex: 1,
-      fontSize: 12,
-      padding: "8px 4px",
+      fontSize: 11,
+      padding: "7px 4px",
       justifyContent: "center"
     },
     onClick: () => setGenderInput(k)
   }, label)))), React.createElement("div", {
     style: {
       width: "100%",
-      marginTop: 12
+      marginTop: 10
     }
   }, React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 10,
       color: "var(--gold)",
       fontFamily: "'IBM Plex Mono',monospace",
       letterSpacing: 2,
-      marginBottom: 8,
+      marginBottom: 6,
       textAlign: "center"
     }
   }, "ATTRACTED TO"), React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8,
+      gap: 6,
       justifyContent: "center"
     }
   }, [["men", "Men"], ["women", "Women"], ["everyone", "Everyone"]].map(([k, label]) => React.createElement("button", {
@@ -8839,48 +9151,32 @@ function OneLifeDossier() {
     className: `btn ${attractionInput === k ? "btn-primary" : "btn-outline"}`,
     style: {
       flex: 1,
-      fontSize: 12,
-      padding: "8px 4px",
+      fontSize: 11,
+      padding: "7px 4px",
       justifyContent: "center"
     },
     onClick: () => setAttractionInput(k)
-  }, label))), React.createElement("div", {
+  }, label))))), React.createElement("div", null, React.createElement("div", {
     style: {
-      fontSize: 9,
-      color: "#7a6f5c",
-      fontStyle: "italic",
-      textAlign: "center",
-      marginTop: 6
-    }
-  }, "This determines who you'll meet romantically.")), React.createElement("div", {
-    style: {
-      width: "100%",
-      marginTop: 12
-    }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 11,
+      fontSize: 10,
       color: "var(--gold)",
       fontFamily: "'IBM Plex Mono',monospace",
       letterSpacing: 2,
-      marginBottom: 8,
+      marginBottom: 6,
       textAlign: "center"
     }
   }, "WHERE WERE YOU BORN?"), React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "repeat(3,1fr)",
-      gap: 6,
-      maxHeight: 180,
-      overflowY: "auto",
-      padding: "2px"
+      gridTemplateColumns: "repeat(4,1fr)",
+      gap: 5
     }
   }, COUNTRIES.map(co => React.createElement("button", {
     key: co.key,
     className: `btn ${countryInput === co.key ? "btn-primary" : "btn-outline"}`,
     style: {
-      fontSize: 11,
-      padding: "7px 4px",
+      fontSize: 9.5,
+      padding: "6px 3px",
       justifyContent: "center",
       flexDirection: "column",
       gap: 1
@@ -8888,24 +9184,40 @@ function OneLifeDossier() {
     onClick: () => setCountryInput(co.key)
   }, React.createElement("span", {
     style: {
-      fontSize: 16
+      fontSize: 14
     }
   }, co.flag), React.createElement("span", {
     style: {
-      fontSize: 10
+      fontSize: 9,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%"
     }
-  }, co.name)))), countryInput && (() => {
+  }, co.name)))), React.createElement("div", {
+    style: {
+      minHeight: 16,
+      marginTop: 6
+    }
+  }, countryInput && (() => {
     const co = getCountry(countryInput);
     return React.createElement("div", {
       style: {
         fontSize: 9,
-        color: "#7a6f5c",
+        color: "#9a8c7c",
         fontStyle: "italic",
-        textAlign: "center",
-        marginTop: 6
+        textAlign: "center"
       }
-    }, co.tier, " \xB7 local pay scale ", co.payMult >= 0.7 ? "high" : co.payMult >= 0.3 ? "moderate" : "low", " \xB7 cost of living ", co.costMult >= 0.7 ? "high" : co.costMult >= 0.3 ? "moderate" : "low");
-  })()), React.createElement("button", {
+    }, co.tier, " \xB7 pay scale ", co.payMult >= 0.7 ? "high" : co.payMult >= 0.3 ? "moderate" : "low", " \xB7 cost of living ", co.costMult >= 0.7 ? "high" : co.costMult >= 0.3 ? "moderate" : "low");
+  })()), React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "#7a6f5c",
+      fontStyle: "italic",
+      textAlign: "center",
+      marginTop: 4
+    }
+  }, "Attraction determines who you'll meet romantically."))), React.createElement("button", {
     className: "btn btn-primary btn-block",
     style: {
       marginTop: 16,
@@ -8917,7 +9229,7 @@ function OneLifeDossier() {
     disabled: !genderInput || !attractionInput || !countryInput
   }, "Open Case File ", React.createElement(ChevronRight, {
     size: 16
-  }))), screen === "create" && React.createElement("div", {
+  })))), screen === "create" && React.createElement("div", {
     className: "center-col"
   }, React.createElement("div", {
     className: "title-mark"
@@ -9063,10 +9375,15 @@ function OneLifeDossier() {
   }, React.createElement(Landmark, {
     size: 11
   }), " Seek Opportunity Abroad"), (() => {
+    const isLinked = char.housing?.tier === "owned_asset" && char.housing?.linkedAssetKey;
+    const linkedAsset = isLinked ? char.lifestyle.assets.find(a => a.key === char.housing.linkedAssetKey) : null;
     const hTier = getHousingTier(char.housing?.tier || "family");
     const isHomeless = hTier.key === "homeless";
-    const isOwned = hTier.type === "own";
+    const isOwned = hTier.type === "own" || isLinked;
     const country = getCountry(char.country);
+    const displayLabel = linkedAsset ? linkedAsset.label : hTier.label;
+    const displayDesc = linkedAsset ? `${linkedAsset.sub} · your own property, moved in from the Asset Catalogue` : hTier.desc;
+    const DisplayIcon = linkedAsset ? Gem : hTier.icon;
     return React.createElement(React.Fragment, null, React.createElement("div", {
       className: "sec-title",
       style: {
@@ -9088,7 +9405,7 @@ function OneLifeDossier() {
         gap: 6,
         marginBottom: 2
       }
-    }, React.createElement(hTier.icon, {
+    }, React.createElement(DisplayIcon, {
       size: 13,
       style: {
         color: isHomeless ? "var(--rust)" : isOwned ? "var(--gold)" : "inherit"
@@ -9099,13 +9416,13 @@ function OneLifeDossier() {
         fontWeight: 700,
         color: isHomeless ? "var(--rust)" : "inherit"
       }
-    }, hTier.label)), React.createElement("div", {
+    }, displayLabel)), React.createElement("div", {
       style: {
         fontSize: 10,
         color: "#7a6f5c",
         lineHeight: 1.4
       }
-    }, hTier.desc), hTier.type === "rent" && React.createElement("div", {
+    }, displayDesc), hTier.type === "rent" && !isLinked && React.createElement("div", {
       style: {
         fontSize: 10,
         color: "var(--rust)",
@@ -9493,7 +9810,9 @@ function OneLifeDossier() {
       borderRadius: 3,
       border: "1.5px solid #b9ac8c",
       fontFamily: "IBM Plex Mono",
-      fontSize: 11
+      fontSize: 11,
+      background: "#fff",
+      color: "var(--ink)"
     }
   }), React.createElement("button", {
     className: "btn btn-primary",
@@ -10554,7 +10873,7 @@ function OneLifeDossier() {
     className: "sec-title"
   }, "Finances"), (() => {
     const portfolioVal = Object.values(char.stockPortfolio || {}).reduce((s, v) => s + v, 0);
-    const homeVal = char.housing?.ownedValue || 0;
+    const homeVal = char.housing?.linkedAssetKey ? 0 : char.housing?.ownedValue || 0;
     const nw = char.cash + char.investments.stocks + char.investments.gold + char.investments.mf + (char.businessStakes || []).reduce((s, x) => s + x.currentValue, 0) + (char.lifestyle?.assets || []).reduce((s, x) => s + x.currentValue, 0) + portfolioVal + homeVal;
     return React.createElement("div", {
       className: "money-box"
@@ -10712,7 +11031,9 @@ function OneLifeDossier() {
         borderRadius: 3,
         border: "1px solid #b9ac8c",
         fontFamily: "IBM Plex Mono",
-        fontSize: 10
+        fontSize: 10,
+        background: "#fff",
+        color: "var(--ink)"
       },
       id: `stock-${st.key}`
     }), React.createElement("button", {
@@ -11442,7 +11763,9 @@ function OneLifeDossier() {
       borderRadius: 3,
       border: "1.5px solid #b9ac8c",
       fontFamily: "IBM Plex Mono",
-      fontSize: 11
+      fontSize: 11,
+      background: "#fff",
+      color: "var(--ink)"
     }
   }), React.createElement("button", {
     className: "btn btn-danger",
@@ -12717,7 +13040,9 @@ function OneLifeDossier() {
           borderRadius: 3,
           border: "1.5px solid #b9ac8c",
           fontFamily: "IBM Plex Mono",
-          fontSize: 13
+          fontSize: 13,
+          background: "#fff",
+          color: "var(--ink)"
         }
       }));
     })), React.createElement("div", {
@@ -12762,7 +13087,10 @@ function OneLifeDossier() {
     }, "You've allocated more than the estate is worth. Reduce an amount to continue.")));
   })(), pendingDecision?.type === "housing_catalog" && (() => {
     const country = getCountry(char.country);
+    const isLinked = char.housing?.tier === "owned_asset" && char.housing?.linkedAssetKey;
+    const linkedAsset = isLinked ? char.lifestyle.assets.find(a => a.key === char.housing.linkedAssetKey) : null;
     const currentTier = getHousingTier(char.housing?.tier || "family");
+    const currentLabel = linkedAsset ? `${linkedAsset.label} (${linkedAsset.sub})` : currentTier.label;
     return React.createElement("div", {
       className: "overlay"
     }, React.createElement("div", {
@@ -12772,17 +13100,26 @@ function OneLifeDossier() {
       }
     }, React.createElement("h3", null, "Where You Live"), React.createElement("div", {
       className: "sub"
-    }, "Currently: ", currentTier.label, " \xB7 housing affects health, happiness, and mental health every year"), React.createElement("div", {
+    }, "Currently: ", currentLabel, " \xB7 housing affects health, happiness, and mental health every year"), React.createElement("div", {
+      style: {
+        marginTop: 8,
+        padding: "8px 10px",
+        background: "rgba(201,166,75,.10)",
+        borderRadius: 4,
+        fontSize: 10,
+        color: "#7a6f5c"
+      }
+    }, "\uD83D\uDCA1 Already own a place from the ", React.createElement("strong", null, "Asset Catalogue"), " (Money tab \u2192 Browse Assets \u2192 Properties)? You can move into any property you own from there instead of buying one of these generic tiers."), React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: 8,
         marginTop: 12,
-        maxHeight: 440,
+        maxHeight: 400,
         overflowY: "auto"
       }
     }, HOUSING_TIERS.filter(h => h.key !== "homeless").map(h => {
-      const isCurrent = h.key === currentTier.key;
+      const isCurrent = !isLinked && h.key === currentTier.key;
       const localRent = h.type === "rent" ? Math.round(h.baseRent * country.costMult) : 0;
       const localPrice = h.type === "own" ? Math.round(h.basePrice * country.costMult) : 0;
       const canAfford = h.type === "own" ? char.cash >= localPrice : true;
@@ -14563,7 +14900,15 @@ function OneLifeDossier() {
       maxHeight: 400,
       overflowY: "auto"
     }
-  }, (ASSET_CATALOG[assetCategory] || []).map(item => {
+  }, assetCategory === "properties" && React.createElement("div", {
+    style: {
+      gridColumn: "1 / -1",
+      fontSize: 10,
+      color: "#7a6f5c",
+      fontStyle: "italic",
+      marginBottom: 2
+    }
+  }, "Showing listings in ", getCountry(char.country).flag, " ", getCountry(char.country).name, " \u2014 the catalogue follows you if you migrate."), (assetCategory === "properties" ? getVisibleProperties(char.country) : ASSET_CATALOG[assetCategory] || []).map(item => {
     const owned = char.lifestyle.assets.find(a => a.key === item.key);
     const localPrice = Math.round(item.price * getCountry(char.country).costMult);
     const canAfford = char.cash >= localPrice;
@@ -14646,7 +14991,24 @@ function OneLifeDossier() {
         color: "var(--rust)",
         marginTop: 4
       }
-    }, "Depreciates ~", Math.round(item.depRate * 100), "%/yr"));
+    }, "Depreciates ~", Math.round(item.depRate * 100), "%/yr"), assetCategory === "properties" && owned && (char.housing?.linkedAssetKey === item.key ? React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--moss)",
+        marginTop: 6,
+        fontWeight: 600
+      }
+    }, "\uD83C\uDFE0 This is where you live") : React.createElement("button", {
+      className: "btn btn-outline",
+      style: {
+        fontSize: 10,
+        padding: "4px 10px",
+        marginTop: 6,
+        width: "100%",
+        justifyContent: "center"
+      },
+      onClick: () => moveIntoProperty(item.key)
+    }, "Move In")));
   })), React.createElement("button", {
     className: "btn btn-outline btn-block",
     style: {
@@ -14672,7 +15034,9 @@ function OneLifeDossier() {
       border: "1.5px solid #b9ac8c",
       fontFamily: "IBM Plex Mono",
       fontSize: 13,
-      marginBottom: 12
+      marginBottom: 12,
+      background: "#fff",
+      color: "var(--ink)"
     }
   }), React.createElement("div", {
     className: "option-grid"
