@@ -4603,6 +4603,9 @@ const SPORTS_TROPHIES = {
   tennis: ["First Title", "Top 50 Entry", "Top 10 Entry", "Grand Slam Finalist", "World #1"],
   athletics: ["National Qualifier", "National Medal", "Asian Games Gold", "Olympic Finalist", "Olympic Gold"]
 };
+// Releases, tours, gigs and paintings all draw from one annual pool —
+// keeps a single year's clicking from turning into unlimited income.
+const ARTS_ACTIONS_PER_YEAR_CAP = 3;
 const ARTS_ACTIONS = [{
   key: "release",
   label: "Release New Work",
@@ -4867,7 +4870,8 @@ const FRESH_CHAR = () => ({
     discography: [],
     totalStreams: 0,
     paintings: [],
-    albumInProgress: null
+    albumInProgress: null,
+    actionsThisYear: 0
   },
   rel: {
     stage: "single",
@@ -6237,6 +6241,24 @@ function OneLifeDossier() {
     });
     setPendingDecision(null);
   }
+  // Resume operations after prison — same rank, but the crew scattered while you were away
+  function resumeUnderworld() {
+    setChar(prev => {
+      const c = structuredClone(prev);
+      if (c.underworld.active || c.underworld.prisonYearsLeft > 0 || c.underworld.rank === 0) return prev;
+      c.underworld.active = true;
+      c.underworld.crewSize = Math.floor((c.underworld.crewSize || 0) / 2);
+      applyEffects(c, {
+        reputation: -3
+      });
+      pushLog(c, {
+        text: "You got back in touch with the old contacts. Half the crew had moved on, but the life took you back.",
+        tone: "politics"
+      });
+      return c;
+    });
+    setPendingDecision(null);
+  }
   function runCrimeOp(opKey) {
     setChar(prev => {
       const c = structuredClone(prev);
@@ -6807,8 +6829,10 @@ function OneLifeDossier() {
       ensureSocialMedia(c);
       const act = ARTS_ACTIONS.find(a => a.key === actionKey);
       if (!act) return prev;
+      if ((c.artsCareer.actionsThisYear || 0) >= ARTS_ACTIONS_PER_YEAR_CAP) return prev;
       if (c.cash < act.cost) return prev;
       c.cash -= act.cost;
+      c.artsCareer.actionsThisYear = (c.artsCareer.actionsThisYear || 0) + 1;
       const spec = ARTS[c.specialization];
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       if (act.type === "release") {
@@ -6917,11 +6941,13 @@ function OneLifeDossier() {
     setChar(prev => {
       const c = structuredClone(prev);
       ensureSocialMedia(c);
+      if ((c.artsCareer.actionsThisYear || 0) >= ARTS_ACTIONS_PER_YEAR_CAP) return prev;
       const country = getCountry(countryKey);
       const cost = Math.round(15000 * country.costMult);
       if (c.cash < cost) return prev;
       if (getFame(c) < 20) return prev;
       c.cash -= cost;
+      c.artsCareer.actionsThisYear = (c.artsCareer.actionsThisYear || 0) + 1;
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       const drawFactor = (getFame(c) * 1.2 + c.artsCareer.skill * 0.6) * country.payMult * label.fameMult;
       const revenue = Math.round(drawFactor * 350 * rnd(0.8, 1.25));
@@ -6944,11 +6970,13 @@ function OneLifeDossier() {
     setChar(prev => {
       const c = structuredClone(prev);
       ensureSocialMedia(c);
+      if ((c.artsCareer.actionsThisYear || 0) >= ARTS_ACTIONS_PER_YEAR_CAP) return prev;
       const country = getCountry(countryKey);
       const cost = Math.round(80000 * country.costMult);
       if (c.cash < cost) return prev;
       if (getFame(c) < 50) return prev;
       c.cash -= cost;
+      c.artsCareer.actionsThisYear = (c.artsCareer.actionsThisYear || 0) + 1;
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       const sellOutChance = Math.min(0.92, 0.35 + getFame(c) / 150 + c.artsCareer.skill / 200);
       const soldOut = Math.random() < sellOutChance;
@@ -7000,10 +7028,12 @@ function OneLifeDossier() {
     setChar(prev => {
       const c = structuredClone(prev);
       ensureSocialMedia(c);
+      if ((c.artsCareer.actionsThisYear || 0) >= ARTS_ACTIONS_PER_YEAR_CAP) return prev;
       const isAlbum = type === "album";
       const cost = isAlbum ? 20000 : 2000;
       if (c.cash < cost) return prev;
       c.cash -= cost;
+      c.artsCareer.actionsThisYear = (c.artsCareer.actionsThisYear || 0) + 1;
       const label = ARTS_LABELS.find(l => l.key === c.artsCareer.label) || ARTS_LABELS[0];
       const isCreative = c.traits.includes("creative");
       const title = isAlbum ? genAlbumTitle() : genSongTitle();
@@ -7127,6 +7157,8 @@ function OneLifeDossier() {
     setChar(prev => {
       const c = structuredClone(prev);
       ensureSocialMedia(c);
+      if ((c.artsCareer.actionsThisYear || 0) >= ARTS_ACTIONS_PER_YEAR_CAP) return prev;
+      c.artsCareer.actionsThisYear = (c.artsCareer.actionsThisYear || 0) + 1;
       const isCreative = c.traits.includes("creative");
       const title = genPaintingTitle();
       const baseVal = Math.round((getFame(c) * 800 + c.artsCareer.skill * 600 + c.stats.smarts * 200 + c.artsCareer.works * 200 + Math.random() * 10000) * (isCreative ? 1.5 : 1));
@@ -8630,6 +8662,7 @@ function OneLifeDossier() {
         };
       });
       c.lifestyle.checkedUpThisYear = false;
+      c.artsCareer.actionsThisYear = 0;
       if (c.migrationAdjustment > 0) {
         c.migrationAdjustment -= 1;
         applyEffects(c, {
@@ -10031,10 +10064,10 @@ function OneLifeDossier() {
     style: {
       fontSize: 10,
       padding: "5px 8px",
-      opacity: char.cash < 2000 ? 0.4 : 1
+      opacity: (char.cash < 2000 || (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP) ? 0.4 : 1
     },
     onClick: () => releaseMusic("single"),
-    disabled: char.cash < 2000
+    disabled: char.cash < 2000 || (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP
   }, React.createElement(Mic2, {
     size: 11
   }), " Record Single"), React.createElement("button", {
@@ -10052,9 +10085,11 @@ function OneLifeDossier() {
     className: "btn btn-outline",
     style: {
       fontSize: 10,
-      padding: "5px 8px"
+      padding: "5px 8px",
+      opacity: (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP ? 0.4 : 1
     },
-    onClick: createPainting
+    onClick: createPainting,
+    disabled: (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP
   }, React.createElement(Sparkles, {
     size: 11
   }), " Paint"), char.socialMedia.active && React.createElement("button", {
@@ -11122,7 +11157,15 @@ function OneLifeDossier() {
         color: "var(--gold)",
         marginTop: 4
       }
-    }, "\u2B50 Next release has a quality bonus")), React.createElement("div", {
+    }, "\u2B50 Next release has a quality bonus"), React.createElement("div", {
+      style: {
+        fontSize: 9,
+        fontFamily: "IBM Plex Mono",
+        color: (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP ? "var(--rust)" : "#7a6f5c",
+        marginTop: 4,
+        textAlign: "right"
+      }
+    }, (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP ? "No more output this year \u2014 only so many hours in a day." : `${ARTS_ACTIONS_PER_YEAR_CAP-(char.artsCareer.actionsThisYear||0)} of ${ARTS_ACTIONS_PER_YEAR_CAP} actions left this year`)), React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr 1fr",
@@ -11192,7 +11235,7 @@ function OneLifeDossier() {
         padding: "7px 10px"
       },
       onClick: () => releaseMusic("single"),
-      disabled: char.cash < 2000
+      disabled: char.cash < 2000 || (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP
     }, React.createElement(Mic2, {
       size: 12
     }), " Release Single", React.createElement("span", {
@@ -11265,9 +11308,11 @@ function OneLifeDossier() {
       className: "btn btn-primary",
       style: {
         fontSize: 11,
-        padding: "7px 10px"
+        padding: "7px 10px",
+        opacity: (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP ? 0.4 : 1
       },
-      onClick: createPainting
+      onClick: createPainting,
+      disabled: (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP
     }, React.createElement(Sparkles, {
       size: 12
     }), " Create Painting"), React.createElement("button", {
@@ -11362,10 +11407,10 @@ function OneLifeDossier() {
         fontSize: 10,
         padding: "5px 8px",
         justifyContent: "space-between",
-        opacity: char.cash < (act.cost || 0) ? 0.4 : 1
+        opacity: (char.cash < (act.cost || 0) || (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP) ? 0.4 : 1
       },
       onClick: () => doArtsAction(act.key),
-      disabled: char.cash < (act.cost || 0)
+      disabled: char.cash < (act.cost || 0) || (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP
     }, React.createElement("span", {
       style: {
         display: "flex",
@@ -12601,7 +12646,69 @@ function OneLifeDossier() {
     onClick: () => setPendingDecision({
       type: "go_legit"
     })
-  }, "Walk Away")))) : !char.underworld.wentLegit && char.age >= 18 && React.createElement("button", {
+  }, "Walk Away"))), !char.underworld.active && char.underworld.prisonYearsLeft === 0 && char.underworld.rank > 0 && React.createElement(React.Fragment, null, React.createElement("div", {
+    className: "mini-bar-row",
+    style: {
+      marginBottom: 8
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: "#7a6f5c",
+      width: 36
+    }
+  }, "Heat"), React.createElement("div", {
+    className: "bar-track",
+    style: {
+      height: 5,
+      flex: 1
+    }
+  }, React.createElement("div", {
+    className: "bar-fill",
+    style: {
+      width: `${char.underworld.heat}%`,
+      background: char.underworld.heat >= 70 ? "var(--rust)" : char.underworld.heat >= 45 ? "var(--gold)" : "var(--moss)"
+    }
+  })), React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontFamily: "IBM Plex Mono",
+      width: 22,
+      textAlign: "right"
+    }
+  }, char.underworld.heat)), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#7a6f5c",
+      marginBottom: 8
+    }
+  }, char.underworld.beenArrested ? "You did your time. The old crew scattered, but the life is still there if you want back in." : "Laying low. The life is still there if you want back in."), React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 5
+    }
+  }, React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 11,
+      padding: "6px 10px",
+      borderColor: "var(--rust)",
+      color: "var(--rust)"
+    },
+    onClick: resumeUnderworld
+  }, React.createElement(Skull, {
+    size: 12
+  }), " Resume Operations"), React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 11,
+      padding: "6px 10px"
+    },
+    onClick: () => setPendingDecision({
+      type: "go_legit"
+    })
+  }, "Walk Away for Good")))) : !char.underworld.wentLegit && char.age >= 18 && React.createElement("button", {
     className: "btn btn-outline btn-block",
     style: {
       fontSize: 11,
@@ -14020,7 +14127,8 @@ function OneLifeDossier() {
     },
     onClick: () => respondToScoutOffer(false)
   }, "Pass")))), pendingDecision?.type === "world_tour" && (() => {
-    const eligible = getFame(char) >= 20;
+    const capReached = (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP;
+    const eligible = getFame(char) >= 20 && !capReached;
     return React.createElement("div", {
       className: "overlay"
     }, React.createElement("div", {
@@ -14091,7 +14199,7 @@ function OneLifeDossier() {
         color: "#655c4c",
         marginTop: 10
       }
-    }, "Build more fame first \u2014 release music, paint, and grow your following before you can fill venues abroad."), React.createElement("button", {
+    }, capReached ? "No more output this year \u2014 only so many hours in a day." : "Build more fame first \u2014 release music, paint, and grow your following before you can fill venues abroad."), React.createElement("button", {
       className: "btn btn-outline btn-block",
       style: {
         marginTop: 10
@@ -14099,7 +14207,8 @@ function OneLifeDossier() {
       onClick: () => setPendingDecision(null)
     }, "Close")));
   })(), pendingDecision?.type === "stadium_show" && (() => {
-    const eligible = getFame(char) >= 50;
+    const capReached = (char.artsCareer.actionsThisYear||0) >= ARTS_ACTIONS_PER_YEAR_CAP;
+    const eligible = getFame(char) >= 50 && !capReached;
     return React.createElement("div", {
       className: "overlay"
     }, React.createElement("div", {
@@ -14171,7 +14280,7 @@ function OneLifeDossier() {
         color: "#655c4c",
         marginTop: 10
       }
-    }, "Stadiums are for real stars. Keep building fame through tours, releases, and practice."), React.createElement("button", {
+    }, capReached ? "No more output this year — only so many hours in a day." : "Stadiums are for real stars. Keep building fame through tours, releases, and practice."), React.createElement("button", {
       className: "btn btn-outline btn-block",
       style: {
         marginTop: 10
