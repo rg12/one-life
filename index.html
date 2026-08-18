@@ -6512,7 +6512,7 @@ function OneLifeDossier() {
         c.socialMedia.startAge = c.age;
         c.socialMedia.followers = 200;
       }
-      if (act.underworldChance && !c.underworld.contactOffered && Math.random() < act.underworldChance) {
+      if (act.underworldChance && !c.underworld.active && !c.underworld.contactOffered && Math.random() < act.underworldChance) {
         c.underworld.contactOffered = true;
         pushLog(c, {
           text: `Someone interesting noticed you skipping class. They'll be in touch.`,
@@ -14588,7 +14588,7 @@ function OneLifeDossier() {
     size: 16
   }), " Chase Stardom"), React.createElement("p", null, "Music, performance, the stage. Better odds if you're Notorious."), React.createElement("span", {
     className: "req"
-  }, "Audition \u2014 success not guaranteed")), React.createElement("div", {
+  }, "Audition \u2014 success not guaranteed")), char.underworld.rank === 0 && React.createElement("div", {
     className: "option-card",
     style: {
       borderColor: "#B5533C"
